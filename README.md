@@ -1,5 +1,13 @@
 # Simplifying Teaching Concurrency with Communicating StateCharts (CSC)
 
+
+In this guide, we provide an itroduction to our concurrency paradigm (CSC) and it's visual model-driven development tool (CSCDRaw).
+This introduction is followed by two packages; [Try at Home package](#try-at-home) for getting started with our tool,
+ and [Curriculum package](#curriculum) for teaching CSC to beginner programmers.
+
+For any inquiries please contact [removed contact information for review].
+
+
 ## Table of Contents
 - [Introduction](#introduction)
 - [Try at Home](#try-at-home)

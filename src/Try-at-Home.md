@@ -1,5 +1,16 @@
 # Try at Home!
 
+This guide provides a complete introduction on how to use CSCDraw.
+No prior coding knowledge is required to get started.
+
+
+## Table of Contents
+- [Introduction](#introduction)
+- [CSC Examples](#csc-examples)
+    - [Lights Game](#lights-game)
+    - [Party Game](#party-game)
+- [Introduction to Our Online IDE](#introduction-to-our-online-ide)
+
 
 ## Introduction
 1. download the [Try at Home Package](src\TryAtHome.rar) locally on your device. 
@@ -41,16 +52,6 @@ An example of the development process can be found in this [demonstration video]
 ## CSC Examples
 
 
-### Party Game
-The Party game is a multiplayer game that requires players to manage
-their money to go to a party. In particular, the party will start only if at
-least three players successfully arrive at the PartyRoom. If a player fails
-to manage their money, then the party will be cancelled.
-
-The [Party Game](3-PartyGame\PartyGame.json) can be found [game removed for review.]
-<!-- [here](https://stabl.rocks/ShowTeasyncServerClient?teasyncServerId=0e4eba0f-79a2-414b-abac-c30f2adfb68e). -->
-
-
 ### Lights Game
 This game is a very simple example of a CSC design to show how [synchronization](#introduction) happens in CSC.
 This idea of this multi-player game is that when
@@ -60,6 +61,16 @@ the lights for everybody connected to the server (global).
 
 The [Lights Game](1-LightsGame\LightsGameCSC.json) can be found [game removed for review.]
 <!-- [here](https://stabl.rocks/ShowTeasyncServerClient?teasyncServerId=b110fe0e-259c-46e8-8ec5-d365e5c03f7f). -->
+
+
+### Party Game
+The Party game is a multiplayer game that requires players to manage
+their money to go to a party. In particular, the party will start only if at
+least three players successfully arrive at the PartyRoom. If a player fails
+to manage their money, then the party will be cancelled.
+
+The [Party Game](3-PartyGame\PartyGame.json) can be found [game removed for review.]
+<!-- [here](https://stabl.rocks/ShowTeasyncServerClient?teasyncServerId=0e4eba0f-79a2-414b-abac-c30f2adfb68e). -->
 
 
 
