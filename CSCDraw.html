@@ -8663,6 +8663,22 @@ var $author$project$View$Graphics$droppableTrash = F2(
 							$MacCASOutreach$graphicsvg$GraphicSVG$circle(10))))
 				]));
 	});
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
+};
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
+	});
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -8684,20 +8700,35 @@ var $elm$core$Maybe$map = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
-var $author$project$Utilities$Helpers$findKeyByValue = F2(
-	function (isMatch, dict) {
+var $elm$core$Dict$values = function (dict) {
+	return A3(
+		$elm$core$Dict$foldr,
+		F3(
+			function (key, value, valueList) {
+				return A2($elm$core$List$cons, value, valueList);
+			}),
+		_List_Nil,
+		dict);
+};
+var $author$project$Utilities$Helpers$findTransIndexByLabel = F2(
+	function (label, scs) {
 		return A2(
 			$elm$core$Maybe$map,
 			$elm$core$Tuple$first,
 			$elm$core$List$head(
 				A2(
-					$elm$core$List$filter,
-					function (_v0) {
-						var k = _v0.a;
-						var v = _v0.b;
-						return A2(isMatch, k, v);
+					$elm$core$List$concatMap,
+					function (sc) {
+						return A2(
+							$elm$core$List$filter,
+							function (_v0) {
+								var _v1 = _v0.b;
+								var name = _v1.a;
+								return _Utils_eq(name, label);
+							},
+							$elm$core$Dict$toList(sc.transitions));
 					},
-					$elm$core$Dict$toList(dict))));
+					$elm$core$Dict$values(scs))));
 	});
 var $MacCASOutreach$graphicsvg$GraphicSVG$notifyMouseDownAt = F2(
 	function (msg, shape) {
@@ -12252,22 +12283,6 @@ var $author$project$View$StandardViewGraphics$arrowUp = A2(
 			])));
 var $author$project$Utilities$Constants$channelHeight = 60;
 var $author$project$Utilities$Constants$channelWidth = 20;
-var $elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
-		}
-	});
-var $elm$core$List$concat = function (lists) {
-	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
-};
-var $elm$core$List$concatMap = F2(
-	function (f, list) {
-		return $elm$core$List$concat(
-			A2($elm$core$List$map, f, list));
-	});
 var $author$project$Utilities$Types$NewBranchAt = F3(
 	function (a, b, c) {
 		return {$: 'NewBranchAt', a: a, b: b, c: c};
@@ -14534,18 +14549,15 @@ var $author$project$Utilities$Types$StartDragChMsgAt = F3(
 		return {$: 'StartDragChMsgAt', a: a, b: b, c: c};
 	});
 var $author$project$View$SCRenderers$getOutMsgs = F4(
-	function (channelsDict, draggedDict, chIdx, goesUp) {
-		var msgList = function () {
+	function (channelsDict, scs, chIdx, goesUp) {
+		var msgIdxList = function () {
 			if (chIdx.$ === 'Just') {
 				var i = chIdx.a;
-				var mChDict = A2($elm$core$Dict$get, i, channelsDict);
-				if (mChDict.$ === 'Just') {
-					var cDict = mChDict.a;
-					var _v3 = cDict;
-					var srcIdx = _v3.a;
-					var dstIdx = _v3.b;
-					var upList = _v3.c;
-					var downList = _v3.d;
+				var _v3 = A2($elm$core$Dict$get, i, channelsDict);
+				if (_v3.$ === 'Just') {
+					var _v4 = _v3.a;
+					var upList = _v4.c;
+					var downList = _v4.d;
 					return goesUp ? upList : downList;
 				} else {
 					return _List_Nil;
@@ -14554,41 +14566,47 @@ var $author$project$View$SCRenderers$getOutMsgs = F4(
 				return _List_Nil;
 			}
 		}();
-		var transLblList = A2(
-			$elm$core$List$filterMap,
-			function (key) {
-				return A2($elm$core$Dict$get, key, draggedDict);
-			},
-			msgList);
-		var upListLength = $elm$core$List$length(msgList);
+		var upListLength = $elm$core$List$length(msgIdxList);
 		var upStep = (_Utils_cmp(($author$project$Utilities$Constants$channelHeight * 0.5) - 5, 4 * (upListLength - 1)) < 0) ? ((($author$project$Utilities$Constants$channelHeight * 0.5) - 5) / (upListLength - 1)) : 4;
+		var getLabelFromAnySC = function (transIdx) {
+			return $elm$core$List$head(
+				A2(
+					$elm$core$List$filterMap,
+					function (sc) {
+						return A2(
+							$elm$core$Maybe$map,
+							function (_v1) {
+								var name = _v1.a;
+								return name;
+							},
+							A2($elm$core$Dict$get, transIdx, sc.transitions));
+					},
+					$elm$core$Dict$values(scs)));
+		};
+		var transLblList = A2($elm$core$List$filterMap, getLabelFromAnySC, msgIdxList);
 		return $MacCASOutreach$graphicsvg$GraphicSVG$group(
-			_List_fromArray(
-				[
-					$MacCASOutreach$graphicsvg$GraphicSVG$group(
-					A2(
-						$elm$core$List$indexedMap,
-						F2(
-							function (x, label) {
-								return function () {
-									if (chIdx.$ === 'Just') {
-										var cIdx = chIdx.a;
-										return $MacCASOutreach$graphicsvg$GraphicSVG$notifyMouseDownAt(
-											A2($author$project$Utilities$Types$StartDragChMsgAt, cIdx, label));
-									} else {
-										return $elm$core$Basics$identity;
-									}
-								}()(
-									A2(
-										$MacCASOutreach$graphicsvg$GraphicSVG$move,
-										_Utils_Tuple2((0.5 * $author$project$Utilities$Constants$channelWidth) - 3, ((0.5 * $author$project$Utilities$Constants$channelHeight) - 4) - (upStep * x)),
-										A2(
-											$MacCASOutreach$graphicsvg$GraphicSVG$scaleY,
-											upStep / 4,
-											$author$project$View$Graphics$inputLabelBox(label))));
-							}),
-						transLblList))
-				]));
+			A2(
+				$elm$core$List$indexedMap,
+				F2(
+					function (x, label) {
+						return function () {
+							if (chIdx.$ === 'Just') {
+								var cIdx = chIdx.a;
+								return $MacCASOutreach$graphicsvg$GraphicSVG$notifyMouseDownAt(
+									A2($author$project$Utilities$Types$StartDragChMsgAt, cIdx, label));
+							} else {
+								return $elm$core$Basics$identity;
+							}
+						}()(
+							A2(
+								$MacCASOutreach$graphicsvg$GraphicSVG$move,
+								_Utils_Tuple2((0.5 * $author$project$Utilities$Constants$channelWidth) - 3, ((0.5 * $author$project$Utilities$Constants$channelHeight) - 4) - (upStep * x)),
+								A2(
+									$MacCASOutreach$graphicsvg$GraphicSVG$scaleY,
+									upStep / 4,
+									$author$project$View$Graphics$inputLabelBox(label))));
+					}),
+				transLblList));
 	});
 var $author$project$View$SantaGraphics$userIcon = $MacCASOutreach$graphicsvg$GraphicSVG$group(
 	_List_fromArray(
@@ -14750,7 +14768,7 @@ var $author$project$View$StandardViewGraphics$wiresIcon = $MacCASOutreach$graphi
 	_List_fromArray(
 		[$author$project$View$StandardViewGraphics$wiresIconUp, $author$project$View$StandardViewGraphics$wiresIconDown]));
 var $author$project$View$AnalogyViews$standardView = F2(
-	function (chDict, draggedDict) {
+	function (chDict, scs) {
 		return $MacCASOutreach$graphicsvg$GraphicSVG$group(
 			_List_fromArray(
 				[
@@ -14766,7 +14784,7 @@ var $author$project$View$AnalogyViews$standardView = F2(
 					A4(
 						$author$project$View$SCRenderers$getOutMsgs,
 						chDict,
-						draggedDict,
+						scs,
 						$elm$core$Maybe$Just(6),
 						true)),
 					A2(
@@ -14779,7 +14797,7 @@ var $author$project$View$AnalogyViews$standardView = F2(
 					A4(
 						$author$project$View$SCRenderers$getOutMsgs,
 						chDict,
-						draggedDict,
+						scs,
 						$elm$core$Maybe$Just(5),
 						false)),
 					A2(
@@ -14792,7 +14810,7 @@ var $author$project$View$AnalogyViews$standardView = F2(
 					A4(
 						$author$project$View$SCRenderers$getOutMsgs,
 						chDict,
-						draggedDict,
+						scs,
 						$elm$core$Maybe$Just(5),
 						true)),
 					$author$project$View$StandardViewGraphics$displayViewAccess
@@ -14811,7 +14829,7 @@ var $author$project$View$StateRenderers$GDragChMsg$gDragChMsgRenderer = F4(
 						[
 							A2($MacCASOutreach$graphicsvg$GraphicSVG$notifyMouseDownAt, $author$project$Utilities$Types$StartPanZoomAt, $author$project$View$Graphics$invisibleRect),
 							A4($author$project$View$SCRenderers$scRenderer, model.scs, model.pan, model.zoom, model.santaChoice),
-							_Utils_eq(model.santaChoice, $author$project$Utilities$Types$SantaSelect) ? $author$project$View$AnalogyViews$santaView : A2($author$project$View$AnalogyViews$standardView, model.channels, model.draggedMsgslabels),
+							_Utils_eq(model.santaChoice, $author$project$Utilities$Types$SantaSelect) ? $author$project$View$AnalogyViews$santaView : A2($author$project$View$AnalogyViews$standardView, model.channels, model.scs),
 							A2(
 							$MacCASOutreach$graphicsvg$GraphicSVG$move,
 							pos,
@@ -14833,13 +14851,7 @@ var $author$project$View$StateRenderers$GDragChMsg$gDragChMsgRenderer = F4(
 								$MacCASOutreach$graphicsvg$GraphicSVG$ghost(
 									A2($MacCASOutreach$graphicsvg$GraphicSVG$rect, 1000, 1000))))
 						]))));
-		var msgIdx = A2(
-			$author$project$Utilities$Helpers$findKeyByValue,
-			F2(
-				function (_v1, v) {
-					return _Utils_eq(v, lbl);
-				}),
-			model.draggedMsgslabels);
+		var msgIdx = A2($author$project$Utilities$Helpers$findTransIndexByLabel, lbl, model.scs);
 		var trash = function () {
 			if (msgIdx.$ === 'Just') {
 				var trIdx = msgIdx.a;
@@ -14864,8 +14876,8 @@ var $author$project$Utilities$Types$PanZoomAt = function (a) {
 	return {$: 'PanZoomAt', a: a};
 };
 var $author$project$Utilities$Types$StopPanZoom = {$: 'StopPanZoom'};
-var $author$project$View$StateRenderers$GPanZoom$gPanZoomRenderer = F6(
-	function (scs, pan, zoom, channels, draggedMsgslabels, santaChoice) {
+var $author$project$View$StateRenderers$GPanZoom$gPanZoomRenderer = F5(
+	function (scs, pan, zoom, channels, santaChoice) {
 		return _List_fromArray(
 			[
 				A2(
@@ -14885,7 +14897,7 @@ var $author$project$View$StateRenderers$GPanZoom$gPanZoomRenderer = F6(
 						_List_fromArray(
 							[
 								A4($author$project$View$SCRenderers$scRenderer, scs, pan, zoom, santaChoice),
-								_Utils_eq(santaChoice, $author$project$Utilities$Types$SantaSelect) ? $author$project$View$AnalogyViews$santaView : A2($author$project$View$AnalogyViews$standardView, channels, draggedMsgslabels)
+								_Utils_eq(santaChoice, $author$project$Utilities$Types$SantaSelect) ? $author$project$View$AnalogyViews$santaView : A2($author$project$View$AnalogyViews$standardView, channels, scs)
 							]))))
 			]);
 	});
@@ -14961,7 +14973,7 @@ var $author$project$View$StateRenderers$GlobalDragView$globalDragRenderer = F5(
 						[
 							A2($MacCASOutreach$graphicsvg$GraphicSVG$notifyMouseDownAt, $author$project$Utilities$Types$StartPanZoomAt, $author$project$View$Graphics$invisibleRect),
 							A4($author$project$View$SCRenderers$scRenderer, model.scs, model.pan, model.zoom, model.santaChoice),
-							_Utils_eq(model.santaChoice, $author$project$Utilities$Types$SantaSelect) ? $author$project$View$AnalogyViews$santaView : A2($author$project$View$AnalogyViews$standardView, model.channels, model.draggedMsgslabels),
+							_Utils_eq(model.santaChoice, $author$project$Utilities$Types$SantaSelect) ? $author$project$View$AnalogyViews$santaView : A2($author$project$View$AnalogyViews$standardView, model.channels, model.scs),
 							A2(
 							$MacCASOutreach$graphicsvg$GraphicSVG$move,
 							pos,
@@ -14989,8 +15001,8 @@ var $author$project$View$StateRenderers$GlobalDragView$globalDragRenderer = F5(
 			sceneElements,
 			$author$project$View$Graphics$overallButtons(model.santaChoice));
 	});
-var $author$project$View$StateRenderers$OverallView$overallRenderer = F7(
-	function (scs, chDict, draggedDict, pan, zoom, santaChoice, _v0) {
+var $author$project$View$StateRenderers$OverallView$overallRenderer = F6(
+	function (scs, chDict, pan, zoom, santaChoice, _v0) {
 		return A2(
 			$elm$core$List$cons,
 			A2($MacCASOutreach$graphicsvg$GraphicSVG$notifyMouseDownAt, $author$project$Utilities$Types$StartPanZoomAt, $author$project$View$Graphics$invisibleRect),
@@ -15025,7 +15037,7 @@ var $author$project$View$StateRenderers$OverallView$overallRenderer = F7(
 													shapes);
 											}),
 										$elm$core$Dict$toList(scs))),
-									_Utils_eq(santaChoice, $author$project$Utilities$Types$SantaSelect) ? $author$project$View$AnalogyViews$santaView : A2($author$project$View$AnalogyViews$standardView, chDict, draggedDict)
+									_Utils_eq(santaChoice, $author$project$Utilities$Types$SantaSelect) ? $author$project$View$AnalogyViews$santaView : A2($author$project$View$AnalogyViews$standardView, chDict, scs)
 								])))),
 				$author$project$View$Graphics$overallButtons(santaChoice)));
 	});
@@ -16289,7 +16301,7 @@ var $author$project$Main$myShapes = function (model) {
 	var _v0 = model.globalState;
 	switch (_v0.$) {
 		case 'OverallView':
-			return A7($author$project$View$StateRenderers$OverallView$overallRenderer, model.scs, model.channels, model.draggedMsgslabels, model.pan, model.zoom, model.santaChoice, model.binState);
+			return A6($author$project$View$StateRenderers$OverallView$overallRenderer, model.scs, model.channels, model.pan, model.zoom, model.santaChoice, model.binState);
 		case 'GlobalDragMsg':
 			var sIdx = _v0.a;
 			var chIdx = _v0.c;
@@ -16322,7 +16334,7 @@ var $author$project$Main$myShapes = function (model) {
 		case 'GlobalDisplayCode':
 			return $author$project$View$StateRenderers$CodeView$codeDisplayer(model.code);
 		case 'GlobalPanZoom':
-			return A6($author$project$View$StateRenderers$GPanZoom$gPanZoomRenderer, model.scs, model.pan, model.zoom, model.channels, model.draggedMsgslabels, model.santaChoice);
+			return A5($author$project$View$StateRenderers$GPanZoom$gPanZoomRenderer, model.scs, model.pan, model.zoom, model.channels, model.santaChoice);
 		default:
 			var scName = _v0.a;
 			var stateChart = _v0.b;
@@ -17670,16 +17682,6 @@ var $author$project$Utilities$Helpers$enlarge = F2(
 			A2($elm$core$Basics$max, top, y),
 			A2($elm$core$Basics$min, bottom, y));
 	});
-var $elm$core$Dict$values = function (dict) {
-	return A3(
-		$elm$core$Dict$foldr,
-		F3(
-			function (key, value, valueList) {
-				return A2($elm$core$List$cons, value, valueList);
-			}),
-		_List_Nil,
-		dict);
-};
 var $author$project$Utilities$Helpers$boundingBox = function (states) {
 	return A3(
 		$elm$core$List$foldl,
@@ -19167,7 +19169,6 @@ var $author$project$Utilities$Update$UpdateDelHelpers$handleDeleteChMsg = F2(
 					}();
 					return updatedScs;
 				});
-			var updateDraggedDict = A2($elm$core$Dict$remove, transIndex, model.draggedMsgslabels);
 			var scs = model.scs;
 			var channels = model.channels;
 			var updatedChannels = A3(
@@ -19207,7 +19208,6 @@ var $author$project$Utilities$Update$UpdateDelHelpers$handleDeleteChMsg = F2(
 					{
 						binState: $author$project$Utilities$Types$Closed,
 						channels: updatedChannels,
-						draggedMsgslabels: updateDraggedDict,
 						globalState: $author$project$Utilities$Types$OverallView,
 						scs: updatedSCsInterfaces(channelIndex)
 					}),
@@ -20106,7 +20106,6 @@ var $author$project$Utilities$Helpers$firstError = function (results) {
 };
 var $author$project$Utilities$Helpers$populateOutputs = function (model) {
 	var stateCharts = model.scs;
-	var draggedMsgsDict = model.draggedMsgslabels;
 	var channels = model.channels;
 	var trIdxList = $author$project$Utilities$Helpers$firstError(
 		A2(
@@ -20423,14 +20422,14 @@ var $author$project$Utilities$Update$UpdateDragHelpers$updateChannelMsgs = F4(
 					var bottSc = _v0.b;
 					var upMsgs = _v0.c;
 					var downMsgs = _v0.d;
-					var newUpMsgs = A2($elm$core$List$member, trIdx, upMsgs) ? upMsgs : ((_Utils_eq(topSc, sIdx) && (_Utils_eq(topSc, $author$project$Utilities$Constants$globalIdx) && (chIdx === 5))) ? _Utils_ap(
+					var newUpMsgs = A2($elm$core$List$member, trIdx, upMsgs) ? upMsgs : ((_Utils_eq(topSc, sIdx) && (_Utils_eq(topSc, $author$project$Utilities$Constants$globalIdx) && _Utils_eq(chIdx, $author$project$Utilities$Constants$upperChIdx))) ? _Utils_ap(
 						upMsgs,
 						_List_fromArray(
-							[trIdx])) : ((_Utils_eq(topSc, $author$project$Utilities$Constants$localIdx) && (chIdx === 6)) ? _Utils_ap(
+							[trIdx])) : ((_Utils_eq(topSc, $author$project$Utilities$Constants$localIdx) && _Utils_eq(chIdx, $author$project$Utilities$Constants$lowerChIdx)) ? _Utils_ap(
 						upMsgs,
 						_List_fromArray(
 							[trIdx])) : upMsgs));
-					var newDownMsgs = A2($elm$core$List$member, trIdx, downMsgs) ? downMsgs : ((_Utils_eq(bottSc, sIdx) && (_Utils_eq(bottSc, $author$project$Utilities$Constants$localIdx) && (_Utils_eq(topSc, $author$project$Utilities$Constants$globalIdx) && (chIdx === 5)))) ? _Utils_ap(
+					var newDownMsgs = A2($elm$core$List$member, trIdx, downMsgs) ? downMsgs : ((_Utils_eq(bottSc, sIdx) && (_Utils_eq(bottSc, $author$project$Utilities$Constants$localIdx) && (_Utils_eq(topSc, $author$project$Utilities$Constants$globalIdx) && _Utils_eq(chIdx, $author$project$Utilities$Constants$upperChIdx)))) ? _Utils_ap(
 						downMsgs,
 						_List_fromArray(
 							[trIdx])) : downMsgs);
@@ -21147,59 +21146,52 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 					return _Utils_Tuple3(
 						function () {
 							var _v50 = model.globalState;
-							switch (_v50.$) {
-								case 'GlobalDragMsg':
-									if (_v50.c.$ === 'Just') {
-										var sIdx = _v50.a;
-										var trIdx = _v50.b;
-										var chIdx = _v50.c.a;
-										var lbl = _v50.d;
-										var xy = _v50.e;
-										var newModel = _Utils_update(
-											model,
-											{
-												channels: A4($author$project$Utilities$Update$UpdateDragHelpers$updateChannelMsgs, sIdx, trIdx, chIdx, model.channels),
-												draggedMsgslabels: A3($elm$core$Dict$insert, trIdx, lbl, model.draggedMsgslabels),
-												globalState: $author$project$Utilities$Types$OverallView
-											});
-										return $author$project$Utilities$Helpers$populateOutputs(newModel);
-									} else {
-										var trIdx = _v50.b;
-										var _v51 = _v50.c;
-										var lbl = _v50.d;
-										var xy = _v50.e;
-										return $author$project$Utilities$Helpers$populateOutputs(
-											_Utils_update(
+							_v50$2:
+							while (true) {
+								switch (_v50.$) {
+									case 'GlobalDragMsg':
+										if (_v50.c.$ === 'Just') {
+											var sIdx = _v50.a;
+											var trIdx = _v50.b;
+											var chIdx = _v50.c.a;
+											var lbl = _v50.d;
+											var xy = _v50.e;
+											var newModel = _Utils_update(
 												model,
 												{
-													draggedMsgslabels: A3($elm$core$Dict$insert, trIdx, lbl, model.draggedMsgslabels),
+													channels: A4($author$project$Utilities$Update$UpdateDragHelpers$updateChannelMsgs, sIdx, trIdx, chIdx, model.channels),
 													globalState: $author$project$Utilities$Types$OverallView
-												}));
-									}
-								case 'GlobalDragChannelmsg':
-									return _Utils_update(
-										model,
-										{globalState: $author$project$Utilities$Types$OverallView});
-								default:
-									return model;
+												});
+											return $author$project$Utilities$Helpers$populateOutputs(newModel);
+										} else {
+											break _v50$2;
+										}
+									case 'GlobalDragChannelmsg':
+										return _Utils_update(
+											model,
+											{globalState: $author$project$Utilities$Types$OverallView});
+									default:
+										break _v50$2;
+								}
 							}
+							return model;
 						}(),
 						$elm$core$Platform$Cmd$none,
 						$author$project$Utilities$Types$NoSnapshot);
 				case 'StopDragOutIdx':
 					var msgToIdx = msg.a;
-					var _v52 = model.globalState;
-					if (_v52.$ === 'Editing') {
-						var scName = _v52.a;
-						var stateChart = _v52.b;
-						var msgPositions = _v52.c;
-						var _v53 = function () {
-							var _v54 = stateChart.dragState;
-							if (_v54.$ === 'MakingMsg') {
-								var _v55 = _v54.a;
-								var sToIdx = _v55.a;
-								var transIdx = _v55.b;
-								var sFromIdx = _v55.c;
+					var _v51 = model.globalState;
+					if (_v51.$ === 'Editing') {
+						var scName = _v51.a;
+						var stateChart = _v51.b;
+						var msgPositions = _v51.c;
+						var _v52 = function () {
+							var _v53 = stateChart.dragState;
+							if (_v53.$ === 'MakingMsg') {
+								var _v54 = _v53.a;
+								var sToIdx = _v54.a;
+								var transIdx = _v54.b;
+								var sFromIdx = _v54.c;
 								return _Utils_Tuple3(
 									_Utils_update(
 										stateChart,
@@ -21221,9 +21213,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 								return _Utils_Tuple3(stateChart, $elm$core$Platform$Cmd$none, $author$project$Utilities$Types$NoSnapshot);
 							}
 						}();
-						var newSC = _v53.a;
-						var newCmd = _v53.b;
-						var newSnapshot = _v53.c;
+						var newSC = _v52.a;
+						var newCmd = _v52.b;
+						var newSnapshot = _v52.c;
 						return _Utils_Tuple3(
 							_Utils_update(
 								model,
@@ -21237,33 +21229,33 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 						return $author$project$Utilities$Constants$noUpdate(model);
 					}
 				case 'StopDrag':
-					var _v56 = model.globalState;
-					if (_v56.$ === 'Editing') {
-						var scName = _v56.a;
-						var stateChart = _v56.b;
-						var msgPositions = _v56.c;
-						var _v57 = function () {
-							var _v58 = stateChart.dragState;
-							switch (_v58.$) {
+					var _v55 = model.globalState;
+					if (_v55.$ === 'Editing') {
+						var scName = _v55.a;
+						var stateChart = _v55.b;
+						var msgPositions = _v55.c;
+						var _v56 = function () {
+							var _v57 = stateChart.dragState;
+							switch (_v57.$) {
 								case 'DraggingState':
-									var idx = _v58.a;
+									var idx = _v57.a;
 									return A2($author$project$Utilities$Update$UpdateDragHelpers$stopDraggingState, stateChart, idx);
 								case 'DraggingTrans':
-									var _v59 = _v58.a;
-									var idx = _v59.a;
-									var fromIdx = _v59.b;
-									var transInstance = _v58.d;
+									var _v58 = _v57.a;
+									var idx = _v58.a;
+									var fromIdx = _v58.b;
+									var transInstance = _v57.d;
 									return A3(
 										$author$project$Utilities$Update$UpdateDragHelpers$stopDraggingTrans,
 										stateChart,
 										_Utils_Tuple2(idx, fromIdx),
 										transInstance);
 								case 'DraggingBranch':
-									var _v60 = _v58.a;
-									var toIdx = _v60.a;
-									var idx = _v60.b;
-									var fromIdx = _v60.c;
-									var ti = _v58.c;
+									var _v59 = _v57.a;
+									var toIdx = _v59.a;
+									var idx = _v59.b;
+									var fromIdx = _v59.c;
+									var ti = _v57.c;
 									return A3(
 										$author$project$Utilities$Update$UpdateDragHelpers$stopDraggingBranch,
 										stateChart,
@@ -21272,9 +21264,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 								case 'DraggingSync':
 									return $author$project$Utilities$Update$UpdateDragHelpers$stopDraggingSync(stateChart);
 								case 'DraggingDiamond':
-									var _v61 = _v58.a;
-									var idx = _v61.a;
-									var fromIdx = _v61.b;
+									var _v60 = _v57.a;
+									var idx = _v60.a;
+									var fromIdx = _v60.b;
 									return A2(
 										$author$project$Utilities$Update$UpdateDragHelpers$stopDraggingDiamond,
 										stateChart,
@@ -21285,9 +21277,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 									return _Utils_Tuple3(stateChart, $elm$core$Platform$Cmd$none, $author$project$Utilities$Types$NoSnapshot);
 							}
 						}();
-						var newSC = _v57.a;
-						var newCmd = _v57.b;
-						var newSnapshot = _v57.c;
+						var newSC = _v56.a;
+						var newCmd = _v56.b;
+						var newSnapshot = _v56.c;
 						return _Utils_Tuple3(
 							_Utils_update(
 								model,
@@ -21307,27 +21299,27 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 					}
 				case 'StopDragOnIdx':
 					var toIdx = msg.a;
-					var _v62 = model.globalState;
-					if (_v62.$ === 'Editing') {
-						var scName = _v62.a;
-						var stateChart = _v62.b;
-						var msgPositions = _v62.c;
-						var _v63 = function () {
-							var _v64 = stateChart.dragState;
-							switch (_v64.$) {
+					var _v61 = model.globalState;
+					if (_v61.$ === 'Editing') {
+						var scName = _v61.a;
+						var stateChart = _v61.b;
+						var msgPositions = _v61.c;
+						var _v62 = function () {
+							var _v63 = stateChart.dragState;
+							switch (_v63.$) {
 								case 'MakingTrans':
-									var fromIdx = _v64.a;
+									var fromIdx = _v63.a;
 									return _Utils_Tuple3(
 										A4($author$project$Utilities$Update$UpdateDragHelpers$makeTransition, toIdx, fromIdx, stateChart, model.nextIdx),
 										$elm$core$Platform$Cmd$none,
 										$author$project$Utilities$Types$MakeSnapshot);
 								case 'MakingBranch':
-									var _v65 = _v64.a;
-									var transIdx = _v65.a;
-									var fromIdx = _v65.b;
-									var _v66 = _v64.b;
-									var xDiamond = _v66.a;
-									var yDiamond = _v66.b;
+									var _v64 = _v63.a;
+									var transIdx = _v64.a;
+									var fromIdx = _v64.b;
+									var _v65 = _v63.b;
+									var xDiamond = _v65.a;
+									var yDiamond = _v65.b;
 									return _Utils_Tuple3(
 										A5(
 											$author$project$Utilities$Update$UpdateDragHelpers$makeBranchTo,
@@ -21339,16 +21331,16 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 										$elm$core$Platform$Cmd$none,
 										$author$project$Utilities$Types$MakeSnapshot);
 								case 'DraggingType':
-									var elmType = _v64.a;
-									var pos = _v64.b;
+									var elmType = _v63.a;
+									var pos = _v63.b;
 									return A3($author$project$Utilities$Update$UpdateDragHelpers$handleDraggingType, toIdx, elmType, stateChart);
 								default:
 									return _Utils_Tuple3(stateChart, $elm$core$Platform$Cmd$none, $author$project$Utilities$Types$NoSnapshot);
 							}
 						}();
-						var newSC = _v63.a;
-						var newCmd = _v63.b;
-						var newSnapshot = _v63.c;
+						var newSC = _v62.a;
+						var newCmd = _v62.b;
+						var newSnapshot = _v62.c;
 						return _Utils_Tuple3(
 							_Utils_update(
 								model,
@@ -21363,15 +21355,15 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 					}
 				case 'NewStateAt':
 					var pos = msg.a;
-					var _v67 = model.globalState;
-					if (_v67.$ === 'Editing') {
-						var scName = _v67.a;
-						var stateChart = _v67.b;
-						var msgPositions = _v67.c;
-						var _v68 = A3($author$project$Utilities$Update$UpdateCreationHelpers$addNewStateOrRename, stateChart, model.nextIdx, pos);
-						var newSC = _v68.a;
-						var newCmd = _v68.b;
-						var newSnapshot = _v68.c;
+					var _v66 = model.globalState;
+					if (_v66.$ === 'Editing') {
+						var scName = _v66.a;
+						var stateChart = _v66.b;
+						var msgPositions = _v66.c;
+						var _v67 = A3($author$project$Utilities$Update$UpdateCreationHelpers$addNewStateOrRename, stateChart, model.nextIdx, pos);
+						var newSC = _v67.a;
+						var newCmd = _v67.b;
+						var newSnapshot = _v67.c;
 						return _Utils_Tuple3(
 							_Utils_update(
 								model,
@@ -21391,15 +21383,15 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 				case 'NewTypeAt':
 					var elmType = msg.a;
 					var pos = msg.b;
-					var _v69 = model.globalState;
-					if (_v69.$ === 'Editing') {
-						var scName = _v69.a;
-						var stateChart = _v69.b;
-						var msgPositions = _v69.c;
-						var _v70 = A3($author$project$Utilities$Update$UpdateCreationHelpers$addNewTypeDuringRename, stateChart, elmType, pos);
-						var newSC = _v70.a;
-						var newCmd = _v70.b;
-						var newSnapshot = _v70.c;
+					var _v68 = model.globalState;
+					if (_v68.$ === 'Editing') {
+						var scName = _v68.a;
+						var stateChart = _v68.b;
+						var msgPositions = _v68.c;
+						var _v69 = A3($author$project$Utilities$Update$UpdateCreationHelpers$addNewTypeDuringRename, stateChart, elmType, pos);
+						var newSC = _v69.a;
+						var newCmd = _v69.b;
+						var newSnapshot = _v69.c;
 						return _Utils_Tuple3(
 							_Utils_update(
 								model,
@@ -21413,14 +21405,14 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 					}
 				case 'NewTransAt':
 					var idx = msg.a;
-					var _v71 = msg.b;
-					var x = _v71.a;
-					var y = _v71.b;
-					var _v72 = model.globalState;
-					if (_v72.$ === 'Editing') {
-						var scName = _v72.a;
-						var stateChart = _v72.b;
-						var msgPositions = _v72.c;
+					var _v70 = msg.b;
+					var x = _v70.a;
+					var y = _v70.b;
+					var _v71 = model.globalState;
+					if (_v71.$ === 'Editing') {
+						var scName = _v71.a;
+						var stateChart = _v71.b;
+						var msgPositions = _v71.c;
 						var updatedSC = _Utils_update(
 							stateChart,
 							{
@@ -21442,25 +21434,25 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 						return $author$project$Utilities$Constants$noUpdate(model);
 					}
 				case 'NewBranchAt':
-					var _v73 = msg.a;
-					var transIdx = _v73.a;
-					var fromIdx = _v73.b;
+					var _v72 = msg.a;
+					var transIdx = _v72.a;
+					var fromIdx = _v72.b;
 					var xyDiamond = msg.b;
-					var _v74 = msg.c;
-					var x = _v74.a;
-					var y = _v74.b;
-					var _v75 = model.globalState;
-					if (_v75.$ === 'Editing') {
-						var scName = _v75.a;
-						var stateChart = _v75.b;
-						var msgPositions = _v75.c;
+					var _v73 = msg.c;
+					var x = _v73.a;
+					var y = _v73.b;
+					var _v74 = model.globalState;
+					if (_v74.$ === 'Editing') {
+						var scName = _v74.a;
+						var stateChart = _v74.b;
+						var msgPositions = _v74.c;
 						var updatedSC = _Utils_update(
 							stateChart,
 							{
 								dragState: function () {
-									var _v76 = stateChart.dragState;
-									if (_v76.$ === 'SelectedDiamond') {
-										var idxs = _v76.a;
+									var _v75 = stateChart.dragState;
+									if (_v75.$ === 'SelectedDiamond') {
+										var idxs = _v75.a;
 										return _Utils_eq(
 											idxs,
 											_Utils_Tuple2(transIdx, fromIdx)) ? A4(
@@ -21486,26 +21478,26 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 						return $author$project$Utilities$Constants$noUpdate(model);
 					}
 				case 'NewMsgAt':
-					var _v77 = msg.a;
-					var sIdx = _v77.a;
-					var transIdx = _v77.b;
-					var fromIdx = _v77.c;
+					var _v76 = msg.a;
+					var sIdx = _v76.a;
+					var transIdx = _v76.b;
+					var fromIdx = _v76.c;
 					var xyLabel = msg.b;
-					var _v78 = msg.c;
-					var x = _v78.a;
-					var y = _v78.b;
-					var _v79 = model.globalState;
-					if (_v79.$ === 'Editing') {
-						var scName = _v79.a;
-						var stateChart = _v79.b;
-						var msgPositions = _v79.c;
+					var _v77 = msg.c;
+					var x = _v77.a;
+					var y = _v77.b;
+					var _v78 = model.globalState;
+					if (_v78.$ === 'Editing') {
+						var scName = _v78.a;
+						var stateChart = _v78.b;
+						var msgPositions = _v78.c;
 						var updatedSC = _Utils_update(
 							stateChart,
 							{
 								dragState: function () {
-									var _v80 = stateChart.dragState;
-									if (_v80.$ === 'BranchRename') {
-										var idxs = _v80.a;
+									var _v79 = stateChart.dragState;
+									if (_v79.$ === 'BranchRename') {
+										var idxs = _v79.a;
 										return _Utils_eq(
 											idxs,
 											_Utils_Tuple3(sIdx, transIdx, fromIdx)) ? A4(
@@ -21531,8 +21523,8 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 						return $author$project$Utilities$Constants$noUpdate(model);
 					}
 				case 'CodeToOverallView':
-					var _v81 = model.globalState;
-					if (_v81.$ === 'GlobalDisplayCode') {
+					var _v80 = model.globalState;
+					if (_v80.$ === 'GlobalDisplayCode') {
 						return _Utils_Tuple3(
 							_Utils_update(
 								model,
@@ -21560,11 +21552,11 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 				case 'ToOverallView':
 					return _Utils_Tuple3(
 						function () {
-							var _v82 = model.globalState;
-							if (_v82.$ === 'Editing') {
-								var scName = _v82.a;
-								var stateChart = _v82.b;
-								var msgPositions = _v82.c;
+							var _v81 = model.globalState;
+							if (_v81.$ === 'Editing') {
+								var scName = _v81.a;
+								var stateChart = _v81.b;
+								var msgPositions = _v81.c;
 								return $author$project$Utilities$Helpers$populateOutputs(
 									_Utils_update(
 										model,
@@ -21585,9 +21577,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 				case 'ErrorToOverallView':
 					return _Utils_Tuple3(
 						function () {
-							var _v83 = model.globalState;
-							if (_v83.$ === 'GlobalError') {
-								var err = _v83.a;
+							var _v82 = model.globalState;
+							if (_v82.$ === 'GlobalError') {
+								var err = _v82.a;
 								return $author$project$Utilities$Helpers$populateOutputs(
 									_Utils_update(
 										model,
@@ -21631,9 +21623,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 				case 'FileRead':
 					if (msg.a.$ === 'Ok') {
 						var jsonString = msg.a.a;
-						var _v84 = A2($elm$json$Json$Decode$decodeString, $author$project$Utilities$Decoders$cscDecoder, jsonString);
-						if (_v84.$ === 'Ok') {
-							var newCSC = _v84.a;
+						var _v83 = A2($elm$json$Json$Decode$decodeString, $author$project$Utilities$Decoders$cscDecoder, jsonString);
+						if (_v83.$ === 'Ok') {
+							var newCSC = _v83.a;
 							return _Utils_Tuple3(
 								_Utils_update(
 									model,
@@ -21641,7 +21633,7 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 								$elm$core$Platform$Cmd$none,
 								$author$project$Utilities$Types$NoSnapshot);
 						} else {
-							var err = _v84.a;
+							var err = _v83.a;
 							return _Utils_Tuple3(
 								model,
 								A2(
@@ -21664,43 +21656,43 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 					var sIdx = msg.a;
 					return A2($author$project$Utilities$Update$UpdateDelHelpers$handleDeleteState, sIdx, model);
 				case 'DeleteTransition':
-					var _v85 = msg.a;
-					var tIdx = _v85.a;
-					var sIdx = _v85.b;
+					var _v84 = msg.a;
+					var tIdx = _v84.a;
+					var sIdx = _v84.b;
 					return A2(
 						$author$project$Utilities$Update$UpdateDelHelpers$handleDeleteTransition,
 						_Utils_Tuple2(tIdx, sIdx),
 						model);
 				case 'DeleteBranch':
-					var _v86 = msg.a;
-					var toIdx = _v86.a;
-					var tIdx = _v86.b;
-					var fromIdx = _v86.c;
+					var _v85 = msg.a;
+					var toIdx = _v85.a;
+					var tIdx = _v85.b;
+					var fromIdx = _v85.c;
 					return A2(
 						$author$project$Utilities$Update$UpdateDelHelpers$handleDeleteBranch,
 						_Utils_Tuple3(toIdx, tIdx, fromIdx),
 						model);
 				case 'DeleteSyncMsg':
-					var _v87 = msg.a;
-					var toIdx = _v87.a;
-					var tIdx = _v87.b;
-					var fromIdx = _v87.c;
+					var _v86 = msg.a;
+					var toIdx = _v86.a;
+					var tIdx = _v86.b;
+					var fromIdx = _v86.c;
 					return A2(
 						$author$project$Utilities$Update$UpdateDelHelpers$handleDeleteSyncMsg,
 						_Utils_Tuple3(toIdx, tIdx, fromIdx),
 						model);
 				case 'DeleteChannelMsg':
-					var _v88 = msg.a;
-					var transIndex = _v88.a;
-					var channelIndex = _v88.b;
+					var _v87 = msg.a;
+					var transIndex = _v87.a;
+					var channelIndex = _v87.b;
 					return A2(
 						$author$project$Utilities$Update$UpdateDelHelpers$handleDeleteChMsg,
 						_Utils_Tuple2(transIndex, channelIndex),
 						model);
 				case 'StartPanZoomAt':
 					var pos = msg.a;
-					var _v89 = model.globalState;
-					switch (_v89.$) {
+					var _v88 = model.globalState;
+					switch (_v88.$) {
 						case 'OverallView':
 							return _Utils_Tuple3(
 								_Utils_update(
@@ -21711,35 +21703,35 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 								$elm$core$Platform$Cmd$none,
 								$author$project$Utilities$Types$NoSnapshot);
 						case 'Editing':
-							var scName = _v89.a;
-							var stateChart = _v89.b;
-							var msgPositions = _v89.c;
-							var _v90 = _Utils_Tuple3(
+							var scName = _v88.a;
+							var stateChart = _v88.b;
+							var msgPositions = _v88.c;
+							var _v89 = _Utils_Tuple3(
 								_Utils_update(
 									stateChart,
 									{
 										dragState: function () {
-											var _v91 = stateChart.dragState;
-											switch (_v91.$) {
+											var _v90 = stateChart.dragState;
+											switch (_v90.$) {
 												case 'StateRename':
-													var idx = _v91.a;
-													var chars = _v91.b;
-													var excluded = _v91.c;
+													var idx = _v90.a;
+													var chars = _v90.b;
+													var excluded = _v90.c;
 													return A2(
 														$elm$core$List$member,
 														$elm$core$String$concat(
 															$elm$core$List$reverse(chars)),
 														excluded) ? A2($author$project$Utilities$Types$ErrorMessage, 'Cannot have same name for two states!', stateChart.dragState) : (($elm$core$Char$isDigit(
 														function () {
-															var _v92 = $elm$core$List$head(
+															var _v91 = $elm$core$List$head(
 																$elm$core$List$reverse(chars));
-															if (_v92.$ === 'Just') {
-																var c = _v92.a;
-																var _v93 = $elm$core$String$uncons(c);
-																if (_v93.$ === 'Just') {
-																	var _v94 = _v93.a;
-																	var a = _v94.a;
-																	var b = _v94.b;
+															if (_v91.$ === 'Just') {
+																var c = _v91.a;
+																var _v92 = $elm$core$String$uncons(c);
+																if (_v92.$ === 'Just') {
+																	var _v93 = _v92.a;
+																	var a = _v93.a;
+																	var b = _v93.b;
 																	return a;
 																} else {
 																	return _Utils_chr('.');
@@ -21749,25 +21741,25 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 															}
 														}()) || $elm$core$List$isEmpty(chars)) ? A2($author$project$Utilities$Types$ErrorMessage, 'State name cannot be empty or begin with a number!', stateChart.dragState) : $author$project$Utilities$Types$PanZoom(pos));
 												case 'TransRename':
-													var tIdx = _v91.a;
-													var chars = _v91.b;
-													var excluded = _v91.c;
-													var transInstance = _v91.d;
+													var tIdx = _v90.a;
+													var chars = _v90.b;
+													var excluded = _v90.c;
+													var transInstance = _v90.d;
 													return A2(
 														$elm$core$List$member,
 														$elm$core$String$concat(
 															$elm$core$List$reverse(chars)),
 														excluded) ? A2($author$project$Utilities$Types$ErrorMessage, 'Cannot have same name for two transitions!', stateChart.dragState) : (($elm$core$Char$isDigit(
 														function () {
-															var _v95 = $elm$core$List$head(
+															var _v94 = $elm$core$List$head(
 																$elm$core$List$reverse(chars));
-															if (_v95.$ === 'Just') {
-																var c = _v95.a;
-																var _v96 = $elm$core$String$uncons(c);
-																if (_v96.$ === 'Just') {
-																	var _v97 = _v96.a;
-																	var a = _v97.a;
-																	var b = _v97.b;
+															if (_v94.$ === 'Just') {
+																var c = _v94.a;
+																var _v95 = $elm$core$String$uncons(c);
+																if (_v95.$ === 'Just') {
+																	var _v96 = _v95.a;
+																	var a = _v96.a;
+																	var b = _v96.b;
 																	return a;
 																} else {
 																	return _Utils_chr('.');
@@ -21777,10 +21769,10 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 															}
 														}()) || $elm$core$List$isEmpty(chars)) ? A2($author$project$Utilities$Types$ErrorMessage, 'Transition name cannot be empty or begin with a number!', stateChart.dragState) : $author$project$Utilities$Types$PanZoom(pos));
 												case 'BranchRename':
-													var tIdx = _v91.a;
-													var chars = _v91.b;
-													var excluded = _v91.c;
-													var transInstance = _v91.d;
+													var tIdx = _v90.a;
+													var chars = _v90.b;
+													var excluded = _v90.c;
+													var transInstance = _v90.d;
 													return A2(
 														$elm$core$List$member,
 														$elm$core$String$concat(
@@ -21793,18 +21785,18 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 									}),
 								$elm$core$Platform$Cmd$none,
 								$author$project$Utilities$Types$NoSnapshot);
-							var newSC = _v90.a;
-							var newCmd = _v90.b;
-							var newSnapshot = _v90.c;
+							var newSC = _v89.a;
+							var newCmd = _v89.b;
+							var newSnapshot = _v89.c;
 							return _Utils_Tuple3(
 								_Utils_update(
 									model,
 									{
 										globalState: function () {
 											var zoom = stateChart.zoom;
-											var _v98 = stateChart.pan;
-											var px = _v98.a;
-											var py = _v98.b;
+											var _v97 = stateChart.pan;
+											var px = _v97.a;
+											var py = _v97.b;
 											return A3(
 												$author$project$Utilities$Types$Editing,
 												scName,
@@ -21813,11 +21805,11 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 													A2(
 														$elm$core$List$indexedMap,
 														F2(
-															function (mapIdx, _v99) {
-																var idx = _v99.a;
-																var _v100 = _v99.b;
-																var label = _v100.a;
-																var tys = _v100.b;
+															function (mapIdx, _v98) {
+																var idx = _v98.a;
+																var _v99 = _v98.b;
+																var label = _v99.a;
+																var tys = _v99.b;
 																return _Utils_Tuple2(
 																	idx,
 																	_Utils_Tuple2(
@@ -21833,10 +21825,10 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 							return $author$project$Utilities$Constants$noUpdate(model);
 					}
 				case 'StopPanZoom':
-					var _v101 = model.globalState;
-					switch (_v101.$) {
+					var _v100 = model.globalState;
+					switch (_v100.$) {
 						case 'GlobalPanZoom':
-							var xy = _v101.a;
+							var xy = _v100.a;
 							return _Utils_Tuple3(
 								_Utils_update(
 									model,
@@ -21844,18 +21836,18 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 								$elm$core$Platform$Cmd$none,
 								$author$project$Utilities$Types$NoSnapshot);
 						case 'Editing':
-							var scName = _v101.a;
-							var stateChart = _v101.b;
-							var msgPositions = _v101.c;
-							var _v102 = _Utils_Tuple3(
+							var scName = _v100.a;
+							var stateChart = _v100.b;
+							var msgPositions = _v100.c;
+							var _v101 = _Utils_Tuple3(
 								_Utils_update(
 									stateChart,
 									{dragState: $author$project$Utilities$Types$Released}),
 								$elm$core$Platform$Cmd$none,
 								$author$project$Utilities$Types$MakeSnapshot);
-							var newSC = _v102.a;
-							var newCmd = _v102.b;
-							var newSnapshot = _v102.c;
+							var newSC = _v101.a;
+							var newCmd = _v101.b;
+							var newSnapshot = _v101.c;
 							return _Utils_Tuple3(
 								_Utils_update(
 									model,
@@ -21868,17 +21860,17 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 							return $author$project$Utilities$Constants$noUpdate(model);
 					}
 				case 'PanZoomAt':
-					var _v103 = msg.a;
-					var x = _v103.a;
-					var y = _v103.b;
-					var _v104 = model.globalState;
-					switch (_v104.$) {
+					var _v102 = msg.a;
+					var x = _v102.a;
+					var y = _v102.b;
+					var _v103 = model.globalState;
+					switch (_v103.$) {
 						case 'GlobalPanZoom':
-							var _v105 = _v104.a;
-							var xLast = _v105.a;
-							var yLast = _v105.b;
-							var _v106 = model.shiftDown;
-							if (_v106) {
+							var _v104 = _v103.a;
+							var xLast = _v104.a;
+							var yLast = _v104.b;
+							var _v105 = model.shiftDown;
+							if (_v105) {
 								return _Utils_Tuple3(
 									_Utils_update(
 										model,
@@ -21900,9 +21892,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 											globalState: $author$project$Utilities$Types$GlobalPanZoom(
 												_Utils_Tuple2(x, y)),
 											pan: function () {
-												var _v107 = model.pan;
-												var xOld = _v107.a;
-												var yOld = _v107.b;
+												var _v106 = model.pan;
+												var xOld = _v106.a;
+												var yOld = _v106.b;
 												return _Utils_Tuple2(xOld + (x - xLast), yOld + (y - yLast));
 											}()
 										}),
@@ -21910,17 +21902,17 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 									$author$project$Utilities$Types$NoSnapshot);
 							}
 						case 'Editing':
-							var scName = _v104.a;
-							var stateChart = _v104.b;
-							var msgPositions = _v104.c;
-							var _v108 = function () {
-								var _v109 = stateChart.dragState;
-								if (_v109.$ === 'PanZoom') {
-									var _v110 = _v109.a;
-									var xLast = _v110.a;
-									var yLast = _v110.b;
-									var _v111 = model.shiftDown;
-									if (_v111) {
+							var scName = _v103.a;
+							var stateChart = _v103.b;
+							var msgPositions = _v103.c;
+							var _v107 = function () {
+								var _v108 = stateChart.dragState;
+								if (_v108.$ === 'PanZoom') {
+									var _v109 = _v108.a;
+									var xLast = _v109.a;
+									var yLast = _v109.b;
+									var _v110 = model.shiftDown;
+									if (_v110) {
 										return _Utils_Tuple3(
 											_Utils_update(
 												stateChart,
@@ -21942,9 +21934,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 													dragState: $author$project$Utilities$Types$PanZoom(
 														_Utils_Tuple2(x, y)),
 													pan: function () {
-														var _v112 = stateChart.pan;
-														var xOld = _v112.a;
-														var yOld = _v112.b;
+														var _v111 = stateChart.pan;
+														var xOld = _v111.a;
+														var yOld = _v111.b;
 														return _Utils_Tuple2(xOld + (x - xLast), yOld + (y - yLast));
 													}()
 												}),
@@ -21955,18 +21947,18 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 									return _Utils_Tuple3(stateChart, $elm$core$Platform$Cmd$none, $author$project$Utilities$Types$NoSnapshot);
 								}
 							}();
-							var newSC = _v108.a;
-							var newCmd = _v108.b;
-							var newSnapshot = _v108.c;
+							var newSC = _v107.a;
+							var newCmd = _v107.b;
+							var newSnapshot = _v107.c;
 							return _Utils_Tuple3(
 								_Utils_update(
 									model,
 									{
 										globalState: function () {
 											var zoom = stateChart.zoom;
-											var _v113 = stateChart.pan;
-											var px = _v113.a;
-											var py = _v113.b;
+											var _v112 = stateChart.pan;
+											var px = _v112.a;
+											var py = _v112.b;
 											return A3(
 												$author$project$Utilities$Types$Editing,
 												scName,
@@ -21975,11 +21967,11 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 													A2(
 														$elm$core$List$indexedMap,
 														F2(
-															function (mapIdx, _v114) {
-																var idx = _v114.a;
-																var _v115 = _v114.b;
-																var label = _v115.a;
-																var tys = _v115.b;
+															function (mapIdx, _v113) {
+																var idx = _v113.a;
+																var _v114 = _v113.b;
+																var label = _v114.a;
+																var tys = _v114.b;
 																return _Utils_Tuple2(
 																	idx,
 																	_Utils_Tuple2(
@@ -21995,8 +21987,8 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 							return $author$project$Utilities$Constants$noUpdate(model);
 					}
 				case 'Recentre':
-					var _v116 = model.globalState;
-					switch (_v116.$) {
+					var _v115 = model.globalState;
+					switch (_v115.$) {
 						case 'OverallView':
 							return _Utils_Tuple3(
 								_Utils_update(
@@ -22008,10 +22000,10 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 								$elm$core$Platform$Cmd$none,
 								$author$project$Utilities$Types$NoSnapshot);
 						case 'Editing':
-							var scName = _v116.a;
-							var stateChart = _v116.b;
-							var msgPositions = _v116.c;
-							var _v117 = _Utils_Tuple3(
+							var scName = _v115.a;
+							var stateChart = _v115.b;
+							var msgPositions = _v115.c;
+							var _v116 = _Utils_Tuple3(
 								_Utils_update(
 									stateChart,
 									{
@@ -22020,9 +22012,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 									}),
 								$elm$core$Platform$Cmd$none,
 								$author$project$Utilities$Types$MakeSnapshot);
-							var newSC = _v117.a;
-							var newCmd = _v117.b;
-							var newSnapshot = _v117.c;
+							var newSC = _v116.a;
+							var newCmd = _v116.b;
+							var newSnapshot = _v116.c;
 							return _Utils_Tuple3(
 								_Utils_update(
 									model,
@@ -22039,8 +22031,8 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 							return $author$project$Utilities$Constants$noUpdate(model);
 					}
 				case 'ZoomIn':
-					var _v118 = model.globalState;
-					switch (_v118.$) {
+					var _v117 = model.globalState;
+					switch (_v117.$) {
 						case 'OverallView':
 							return _Utils_Tuple3(
 								_Utils_update(
@@ -22049,18 +22041,18 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 								$elm$core$Platform$Cmd$none,
 								$author$project$Utilities$Types$NoSnapshot);
 						case 'Editing':
-							var scName = _v118.a;
-							var stateChart = _v118.b;
-							var msgPositions = _v118.c;
-							var _v119 = _Utils_Tuple3(
+							var scName = _v117.a;
+							var stateChart = _v117.b;
+							var msgPositions = _v117.c;
+							var _v118 = _Utils_Tuple3(
 								_Utils_update(
 									stateChart,
 									{zoom: stateChart.zoom * 1.1}),
 								$elm$core$Platform$Cmd$none,
 								$author$project$Utilities$Types$MakeSnapshot);
-							var newSC = _v119.a;
-							var newCmd = _v119.b;
-							var newSnapshot = _v119.c;
+							var newSC = _v118.a;
+							var newCmd = _v118.b;
+							var newSnapshot = _v118.c;
 							return _Utils_Tuple3(
 								_Utils_update(
 									model,
@@ -22077,8 +22069,8 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 							return $author$project$Utilities$Constants$noUpdate(model);
 					}
 				case 'ZoomOut':
-					var _v120 = model.globalState;
-					switch (_v120.$) {
+					var _v119 = model.globalState;
+					switch (_v119.$) {
 						case 'OverallView':
 							return _Utils_Tuple3(
 								_Utils_update(
@@ -22089,10 +22081,10 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 								$elm$core$Platform$Cmd$none,
 								$author$project$Utilities$Types$NoSnapshot);
 						case 'Editing':
-							var scName = _v120.a;
-							var stateChart = _v120.b;
-							var msgPositions = _v120.c;
-							var _v121 = _Utils_Tuple3(
+							var scName = _v119.a;
+							var stateChart = _v119.b;
+							var msgPositions = _v119.c;
+							var _v120 = _Utils_Tuple3(
 								_Utils_update(
 									stateChart,
 									{
@@ -22100,9 +22092,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 									}),
 								$elm$core$Platform$Cmd$none,
 								$author$project$Utilities$Types$MakeSnapshot);
-							var newSC = _v121.a;
-							var newCmd = _v121.b;
-							var newSnapshot = _v121.c;
+							var newSC = _v120.a;
+							var newCmd = _v120.b;
+							var newSnapshot = _v120.c;
 							return _Utils_Tuple3(
 								_Utils_update(
 									model,
@@ -22135,18 +22127,18 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 						$elm$core$Platform$Cmd$none,
 						$author$project$Utilities$Types$NoSnapshot);
 				case 'Undo':
-					var _v122 = model.globalState;
-					if (_v122.$ === 'Editing') {
-						var scName = _v122.a;
-						var stateChart = _v122.b;
-						var msgPositions = _v122.c;
-						var _v123 = stateChart.undoLst;
-						if (_v123.b) {
-							var _v124 = _v123.a;
-							var st = _v124.a;
-							var tr = _v124.b;
-							var sidx = _v124.c;
-							var ul = _v123.b;
+					var _v121 = model.globalState;
+					if (_v121.$ === 'Editing') {
+						var scName = _v121.a;
+						var stateChart = _v121.b;
+						var msgPositions = _v121.c;
+						var _v122 = stateChart.undoLst;
+						if (_v122.b) {
+							var _v123 = _v122.a;
+							var st = _v123.a;
+							var tr = _v123.b;
+							var sidx = _v123.c;
+							var ul = _v122.b;
 							return _Utils_Tuple3(
 								_Utils_update(
 									model,
@@ -22163,9 +22155,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 															stateChart.states,
 															stateChart.transitions,
 															function () {
-																var _v125 = stateChart.startStateIdx;
-																if (_v125.$ === 'Just') {
-																	var idx = _v125.a;
+																var _v124 = stateChart.startStateIdx;
+																if (_v124.$ === 'Just') {
+																	var idx = _v124.a;
 																	return idx;
 																} else {
 																	return 0;
@@ -22188,11 +22180,11 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 						return $author$project$Utilities$Constants$noUpdate(model);
 					}
 				case 'Redo':
-					var _v126 = model.globalState;
-					if (_v126.$ === 'Editing') {
-						var scName = _v126.a;
-						var stateChart = _v126.b;
-						var msgPositions = _v126.c;
+					var _v125 = model.globalState;
+					if (_v125.$ === 'Editing') {
+						var scName = _v125.a;
+						var stateChart = _v125.b;
+						var msgPositions = _v125.c;
 						return _Utils_Tuple3(
 							_Utils_update(
 								model,
@@ -22201,13 +22193,13 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 										$author$project$Utilities$Types$Editing,
 										scName,
 										function () {
-											var _v127 = stateChart.redoLst;
-											if (_v127.b) {
-												var _v128 = _v127.a;
-												var st = _v128.a;
-												var tr = _v128.b;
-												var sidx = _v128.c;
-												var rl = _v127.b;
+											var _v126 = stateChart.redoLst;
+											if (_v126.b) {
+												var _v127 = _v126.a;
+												var st = _v127.a;
+												var tr = _v127.b;
+												var sidx = _v127.c;
+												var rl = _v126.b;
 												return _Utils_update(
 													stateChart,
 													{
@@ -22218,9 +22210,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 																stateChart.states,
 																stateChart.transitions,
 																function () {
-																	var _v129 = stateChart.startStateIdx;
-																	if (_v129.$ === 'Just') {
-																		var idx = _v129.a;
+																	var _v128 = stateChart.startStateIdx;
+																	if (_v128.$ === 'Just') {
+																		var idx = _v128.a;
 																		return idx;
 																	} else {
 																		return 0;
@@ -22247,9 +22239,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 				case 'WindowResize':
 					var mWH = msg.a;
 					if (mWH.$ === 'Just') {
-						var _v131 = mWH.a;
-						var w = _v131.a;
-						var h = _v131.b;
+						var _v130 = mWH.a;
+						var w = _v130.a;
+						var h = _v130.b;
 						return _Utils_Tuple3(
 							_Utils_update(
 								model,
@@ -22263,9 +22255,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 					}
 				case 'ReturnPosition':
 					var message = msg.a;
-					var _v132 = msg.b;
-					var x = _v132.a;
-					var y = _v132.b;
+					var _v131 = msg.b;
+					var x = _v131.a;
+					var y = _v131.b;
 					var $temp$msg = message(
 						A2(
 							$author$project$Utilities$Helpers$convertCoords,
@@ -22293,18 +22285,18 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 							$elm$core$Platform$Cmd$none,
 							$author$project$Utilities$Types$NoSnapshot);
 					} else {
-						var _v133 = model.globalState;
-						if (_v133.$ === 'Editing') {
-							var scName = _v133.a;
-							var stateChart = _v133.b;
-							var msgPositions = _v133.c;
-							var _v134 = function () {
-								var _v135 = stateChart.dragState;
-								switch (_v135.$) {
+						var _v132 = model.globalState;
+						if (_v132.$ === 'Editing') {
+							var scName = _v132.a;
+							var stateChart = _v132.b;
+							var msgPositions = _v132.c;
+							var _v133 = function () {
+								var _v134 = stateChart.dragState;
+								switch (_v134.$) {
 									case 'StateRename':
-										var idx = _v135.a;
-										var chars = _v135.b;
-										var excluded = _v135.c;
+										var idx = _v134.a;
+										var chars = _v134.b;
+										var excluded = _v134.c;
 										return (code === 'Enter') ? _Utils_Tuple3(
 											_Utils_update(
 												stateChart,
@@ -22315,15 +22307,15 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 															$elm$core$List$reverse(chars)),
 														excluded) ? A2($author$project$Utilities$Types$ErrorMessage, 'Cannot have same name for two states!', stateChart.dragState) : (($elm$core$Char$isDigit(
 														function () {
-															var _v136 = $elm$core$List$head(
+															var _v135 = $elm$core$List$head(
 																$elm$core$List$reverse(chars));
-															if (_v136.$ === 'Just') {
-																var c = _v136.a;
-																var _v137 = $elm$core$String$uncons(c);
-																if (_v137.$ === 'Just') {
-																	var _v138 = _v137.a;
-																	var a = _v138.a;
-																	var b = _v138.b;
+															if (_v135.$ === 'Just') {
+																var c = _v135.a;
+																var _v136 = $elm$core$String$uncons(c);
+																if (_v136.$ === 'Just') {
+																	var _v137 = _v136.a;
+																	var a = _v137.a;
+																	var b = _v137.b;
 																	return a;
 																} else {
 																	return _Utils_chr('.');
@@ -22340,11 +22332,11 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 														$elm$core$Dict$update,
 														idx,
 														$elm$core$Maybe$map(
-															function (_v139) {
-																var pos = _v139.a;
-																var name = _v139.b;
-																var types = _v139.c;
-																var attached = _v139.d;
+															function (_v138) {
+																var pos = _v138.a;
+																var name = _v138.b;
+																var types = _v138.c;
+																var attached = _v138.d;
 																return A3(
 																	$author$project$Utilities$Types$St,
 																	pos,
@@ -22378,11 +22370,11 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 														$elm$core$Dict$update,
 														idx,
 														$elm$core$Maybe$map(
-															function (_v140) {
-																var pos = _v140.a;
-																var name = _v140.b;
-																var types = _v140.c;
-																var attached = _v140.d;
+															function (_v139) {
+																var pos = _v139.a;
+																var name = _v139.b;
+																var types = _v139.c;
+																var attached = _v139.d;
 																return A3(
 																	$author$project$Utilities$Types$St,
 																	pos,
@@ -22401,12 +22393,12 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 											$elm$core$Platform$Cmd$none,
 											$author$project$Utilities$Types$NoSnapshot);
 									case 'TransRename':
-										var _v141 = _v135.a;
-										var tIdx = _v141.a;
-										var fromIdx = _v141.b;
-										var chars = _v135.b;
-										var excluded = _v135.c;
-										var transInstance = _v135.d;
+										var _v140 = _v134.a;
+										var tIdx = _v140.a;
+										var fromIdx = _v140.b;
+										var chars = _v134.b;
+										var excluded = _v134.c;
+										var transInstance = _v134.d;
 										if (code === 'Enter') {
 											var newName = $elm$core$String$concat(
 												$elm$core$List$reverse(chars));
@@ -22422,15 +22414,15 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 											} else {
 												if ($elm$core$Char$isDigit(
 													function () {
-														var _v142 = $elm$core$List$head(
+														var _v141 = $elm$core$List$head(
 															$elm$core$List$reverse(chars));
-														if (_v142.$ === 'Just') {
-															var c = _v142.a;
-															var _v143 = $elm$core$String$uncons(c);
-															if (_v143.$ === 'Just') {
-																var _v144 = _v143.a;
-																var a = _v144.a;
-																var b = _v144.b;
+														if (_v141.$ === 'Just') {
+															var c = _v141.a;
+															var _v142 = $elm$core$String$uncons(c);
+															if (_v142.$ === 'Just') {
+																var _v143 = _v142.a;
+																var a = _v143.a;
+																var b = _v143.b;
 																return a;
 															} else {
 																return _Utils_chr('.');
@@ -22448,12 +22440,12 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 														$elm$core$Platform$Cmd$none,
 														$author$project$Utilities$Types$NoSnapshot);
 												} else {
-													var _v145 = A2(
+													var _v144 = A2(
 														$elm$core$List$concatMap,
-														function (_v146) {
-															var idx = _v146.a;
-															var _v147 = _v146.b;
-															var name = _v147.a;
+														function (_v145) {
+															var idx = _v145.a;
+															var _v146 = _v145.b;
+															var name = _v146.a;
 															return _Utils_eq(name, newName) ? (_Utils_eq(idx, tIdx) ? _List_fromArray(
 																[$elm$core$Maybe$Nothing]) : _List_fromArray(
 																[
@@ -22461,7 +22453,7 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 																])) : _List_Nil;
 														},
 														$elm$core$Dict$toList(stateChart.transitions));
-													if (!_v145.b) {
+													if (!_v144.b) {
 														return _Utils_Tuple3(
 															_Utils_update(
 																stateChart,
@@ -22471,9 +22463,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 																		$elm$core$Dict$update,
 																		tIdx,
 																		$elm$core$Maybe$map(
-																			function (_v148) {
-																				var name = _v148.a;
-																				var types = _v148.b;
+																			function (_v147) {
+																				var name = _v147.a;
+																				var types = _v147.b;
 																				return A2(
 																					$author$project$Utilities$Types$Tr,
 																					$elm$core$String$concat(
@@ -22491,8 +22483,8 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 															$elm$core$Platform$Cmd$none,
 															$author$project$Utilities$Types$MakeSnapshot);
 													} else {
-														if ((_v145.a.$ === 'Just') && (!_v145.b.b)) {
-															var changeTo = _v145.a.a;
+														if ((_v144.a.$ === 'Just') && (!_v144.b.b)) {
+															var changeTo = _v144.a.a;
 															return _Utils_Tuple3(
 																_Utils_update(
 																	stateChart,
@@ -22502,11 +22494,11 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 																			$elm$core$Dict$update,
 																			fromIdx,
 																			$elm$core$Maybe$map(
-																				function (_v149) {
-																					var pos = _v149.a;
-																					var name = _v149.b;
-																					var types = _v149.c;
-																					var attached = _v149.d;
+																				function (_v148) {
+																					var pos = _v148.a;
+																					var name = _v148.b;
+																					var types = _v148.c;
+																					var attached = _v148.d;
 																					return A4(
 																						$author$project$Utilities$Types$St,
 																						pos,
@@ -22549,16 +22541,16 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 												$author$project$Utilities$Types$NoSnapshot);
 										}
 									case 'BranchRename':
-										var _v150 = _v135.a;
-										var toIdx = _v150.a;
-										var tIdx = _v150.b;
-										var fromIdx = _v150.c;
-										var chars = _v135.b;
-										var excluded = _v135.c;
-										var _v151 = _v135.d;
-										var diamond = _v151.a;
-										var xyPull = _v151.b;
-										var targets = _v151.c;
+										var _v149 = _v134.a;
+										var toIdx = _v149.a;
+										var tIdx = _v149.b;
+										var fromIdx = _v149.c;
+										var chars = _v134.b;
+										var excluded = _v134.c;
+										var _v150 = _v134.d;
+										var diamond = _v150.a;
+										var xyPull = _v150.b;
+										var targets = _v150.c;
 										if (code === 'Enter') {
 											var newName = $elm$core$String$concat(
 												$elm$core$List$reverse(chars));
@@ -22580,10 +22572,10 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 														$elm$core$Dict$update,
 														toIdx,
 														$elm$core$Maybe$map(
-															function (_v153) {
-																var pos = _v153.a;
-																var name = _v153.b;
-																var msgIdx = _v153.c;
+															function (_v152) {
+																var pos = _v152.a;
+																var name = _v152.b;
+																var msgIdx = _v152.c;
 																return A3($author$project$Utilities$Types$Ta, pos, newName, msgIdx);
 															}),
 														targets));
@@ -22596,11 +22588,11 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 																$elm$core$Dict$update,
 																fromIdx,
 																$elm$core$Maybe$map(
-																	function (_v152) {
-																		var pos = _v152.a;
-																		var name = _v152.b;
-																		var types = _v152.c;
-																		var attached = _v152.d;
+																	function (_v151) {
+																		var pos = _v151.a;
+																		var name = _v151.b;
+																		var types = _v151.c;
+																		var attached = _v151.d;
 																		return A4(
 																			$author$project$Utilities$Types$St,
 																			pos,
@@ -22632,9 +22624,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 										return _Utils_Tuple3(stateChart, $elm$core$Platform$Cmd$none, $author$project$Utilities$Types$NoSnapshot);
 								}
 							}();
-							var newSC = _v134.a;
-							var newCmd = _v134.b;
-							var newSnapshot = _v134.c;
+							var newSC = _v133.a;
+							var newCmd = _v133.b;
+							var newSnapshot = _v133.c;
 							return _Utils_Tuple3(
 								_Utils_update(
 									model,
@@ -22648,18 +22640,18 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 						}
 					}
 				case 'ClickedBG':
-					var _v154 = model.globalState;
-					if (_v154.$ === 'Editing') {
-						var scName = _v154.a;
-						var stateChart = _v154.b;
-						var msgPositions = _v154.c;
-						var _v155 = function () {
-							var _v156 = stateChart.dragState;
-							switch (_v156.$) {
+					var _v153 = model.globalState;
+					if (_v153.$ === 'Editing') {
+						var scName = _v153.a;
+						var stateChart = _v153.b;
+						var msgPositions = _v153.c;
+						var _v154 = function () {
+							var _v155 = stateChart.dragState;
+							switch (_v155.$) {
 								case 'StateRename':
-									var idx = _v156.a;
-									var chars = _v156.b;
-									var excluded = _v156.c;
+									var idx = _v155.a;
+									var chars = _v155.b;
+									var excluded = _v155.c;
 									return _Utils_Tuple3(
 										_Utils_update(
 											stateChart,
@@ -22670,15 +22662,15 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 														$elm$core$List$reverse(chars)),
 													excluded) ? A2($author$project$Utilities$Types$ErrorMessage, 'Cannot have same name for two states!', stateChart.dragState) : (($elm$core$Char$isDigit(
 													function () {
-														var _v157 = $elm$core$List$head(
+														var _v156 = $elm$core$List$head(
 															$elm$core$List$reverse(chars));
-														if (_v157.$ === 'Just') {
-															var c = _v157.a;
-															var _v158 = $elm$core$String$uncons(c);
-															if (_v158.$ === 'Just') {
-																var _v159 = _v158.a;
-																var a = _v159.a;
-																var b = _v159.b;
+														if (_v156.$ === 'Just') {
+															var c = _v156.a;
+															var _v157 = $elm$core$String$uncons(c);
+															if (_v157.$ === 'Just') {
+																var _v158 = _v157.a;
+																var a = _v158.a;
+																var b = _v158.b;
 																return a;
 															} else {
 																return _Utils_chr('.');
@@ -22695,11 +22687,11 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 													$elm$core$Dict$update,
 													idx,
 													$elm$core$Maybe$map(
-														function (_v160) {
-															var pos = _v160.a;
-															var name = _v160.b;
-															var types = _v160.c;
-															var attached = _v160.d;
+														function (_v159) {
+															var pos = _v159.a;
+															var name = _v159.b;
+															var types = _v159.c;
+															var attached = _v159.d;
 															return A3(
 																$author$project$Utilities$Types$St,
 																pos,
@@ -22718,12 +22710,12 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 										$elm$core$Platform$Cmd$none,
 										$author$project$Utilities$Types$MakeSnapshot);
 								case 'TransRename':
-									var _v161 = _v156.a;
-									var tIdx = _v161.a;
-									var fromIdx = _v161.b;
-									var chars = _v156.b;
-									var excluded = _v156.c;
-									var transInstance = _v156.d;
+									var _v160 = _v155.a;
+									var tIdx = _v160.a;
+									var fromIdx = _v160.b;
+									var chars = _v155.b;
+									var excluded = _v155.c;
+									var transInstance = _v155.d;
 									var newName = $elm$core$String$concat(
 										$elm$core$List$reverse(chars));
 									if (A2($elm$core$List$member, newName, excluded)) {
@@ -22738,15 +22730,15 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 									} else {
 										if ($elm$core$Char$isDigit(
 											function () {
-												var _v162 = $elm$core$List$head(
+												var _v161 = $elm$core$List$head(
 													$elm$core$List$reverse(chars));
-												if (_v162.$ === 'Just') {
-													var c = _v162.a;
-													var _v163 = $elm$core$String$uncons(c);
-													if (_v163.$ === 'Just') {
-														var _v164 = _v163.a;
-														var a = _v164.a;
-														var b = _v164.b;
+												if (_v161.$ === 'Just') {
+													var c = _v161.a;
+													var _v162 = $elm$core$String$uncons(c);
+													if (_v162.$ === 'Just') {
+														var _v163 = _v162.a;
+														var a = _v163.a;
+														var b = _v163.b;
 														return a;
 													} else {
 														return _Utils_chr('.');
@@ -22764,12 +22756,12 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 												$elm$core$Platform$Cmd$none,
 												$author$project$Utilities$Types$NoSnapshot);
 										} else {
-											var _v165 = A2(
+											var _v164 = A2(
 												$elm$core$List$concatMap,
-												function (_v166) {
-													var idx = _v166.a;
-													var _v167 = _v166.b;
-													var name = _v167.a;
+												function (_v165) {
+													var idx = _v165.a;
+													var _v166 = _v165.b;
+													var name = _v166.a;
 													return _Utils_eq(name, newName) ? (_Utils_eq(idx, tIdx) ? _List_fromArray(
 														[$elm$core$Maybe$Nothing]) : _List_fromArray(
 														[
@@ -22777,7 +22769,7 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 														])) : _List_Nil;
 												},
 												$elm$core$Dict$toList(stateChart.transitions));
-											if (!_v165.b) {
+											if (!_v164.b) {
 												return _Utils_Tuple3(
 													_Utils_update(
 														stateChart,
@@ -22787,9 +22779,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 																$elm$core$Dict$update,
 																tIdx,
 																$elm$core$Maybe$map(
-																	function (_v168) {
-																		var name = _v168.a;
-																		var types = _v168.b;
+																	function (_v167) {
+																		var name = _v167.a;
+																		var types = _v167.b;
 																		return A2(
 																			$author$project$Utilities$Types$Tr,
 																			$elm$core$String$concat(
@@ -22807,8 +22799,8 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 													$elm$core$Platform$Cmd$none,
 													$author$project$Utilities$Types$MakeSnapshot);
 											} else {
-												if ((_v165.a.$ === 'Just') && (!_v165.b.b)) {
-													var changeTo = _v165.a.a;
+												if ((_v164.a.$ === 'Just') && (!_v164.b.b)) {
+													var changeTo = _v164.a.a;
 													return _Utils_Tuple3(
 														_Utils_update(
 															stateChart,
@@ -22818,11 +22810,11 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 																	$elm$core$Dict$update,
 																	fromIdx,
 																	$elm$core$Maybe$map(
-																		function (_v169) {
-																			var pos = _v169.a;
-																			var name = _v169.b;
-																			var types = _v169.c;
-																			var attached = _v169.d;
+																		function (_v168) {
+																			var pos = _v168.a;
+																			var name = _v168.b;
+																			var types = _v168.c;
+																			var attached = _v168.d;
 																			return A4(
 																				$author$project$Utilities$Types$St,
 																				pos,
@@ -22849,9 +22841,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 																	$elm$core$Dict$update,
 																	tIdx,
 																	$elm$core$Maybe$map(
-																		function (_v170) {
-																			var name = _v170.a;
-																			var types = _v170.b;
+																		function (_v169) {
+																			var name = _v169.a;
+																			var types = _v169.b;
 																			return A2(
 																				$author$project$Utilities$Types$Tr,
 																				$elm$core$String$concat(
@@ -22873,13 +22865,13 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 										}
 									}
 								case 'BranchRename':
-									var _v171 = _v156.a;
-									var toIdx = _v171.a;
-									var tIdx = _v171.b;
-									var fromIdx = _v171.c;
-									var chars = _v156.b;
-									var excluded = _v156.c;
-									var transInstance = _v156.d;
+									var _v170 = _v155.a;
+									var toIdx = _v170.a;
+									var tIdx = _v170.b;
+									var fromIdx = _v170.c;
+									var chars = _v155.b;
+									var excluded = _v155.c;
+									var transInstance = _v155.d;
 									var newName = $elm$core$String$concat(
 										$elm$core$List$reverse(chars));
 									return A2($elm$core$List$member, newName, excluded) ? _Utils_Tuple3(
@@ -22898,11 +22890,11 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 													$elm$core$Dict$update,
 													fromIdx,
 													$elm$core$Maybe$map(
-														function (_v172) {
-															var pos = _v172.a;
-															var name = _v172.b;
-															var types = _v172.c;
-															var attached = _v172.d;
+														function (_v171) {
+															var pos = _v171.a;
+															var name = _v171.b;
+															var types = _v171.c;
+															var attached = _v171.d;
 															return A4(
 																$author$project$Utilities$Types$St,
 																pos,
@@ -22923,9 +22915,9 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 										$author$project$Utilities$Types$NoSnapshot);
 							}
 						}();
-						var newSC = _v155.a;
-						var newCmd = _v155.b;
-						var newSnapshot = _v155.c;
+						var newSC = _v154.a;
+						var newCmd = _v154.b;
+						var newSnapshot = _v154.c;
 						return _Utils_Tuple3(
 							_Utils_update(
 								model,
@@ -22939,34 +22931,34 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 					}
 				case 'Display':
 					var isGlobal = msg.a;
-					var _v173 = model.globalState;
-					if (_v173.$ === 'OverallView') {
+					var _v172 = model.globalState;
+					if (_v172.$ === 'OverallView') {
 						var localSCName = $author$project$Utilities$Constants$localIdx;
 						var localSCStates = function () {
-							var _v183 = A2($elm$core$Dict$get, localSCName, model.scs);
-							if (_v183.$ === 'Just') {
-								var localSc = _v183.a;
+							var _v182 = A2($elm$core$Dict$get, localSCName, model.scs);
+							if (_v182.$ === 'Just') {
+								var localSc = _v182.a;
 								return localSc.states;
 							} else {
 								return $elm$core$Dict$empty;
 							}
 						}();
 						var localSCTrs = function () {
-							var _v182 = A2($elm$core$Dict$get, localSCName, model.scs);
-							if (_v182.$ === 'Just') {
-								var localSc = _v182.a;
+							var _v181 = A2($elm$core$Dict$get, localSCName, model.scs);
+							if (_v181.$ === 'Just') {
+								var localSc = _v181.a;
 								return localSc.transitions;
 							} else {
 								return $elm$core$Dict$empty;
 							}
 						}();
 						var stIdxLocal = function () {
-							var _v180 = A2($elm$core$Dict$get, localSCName, model.scs);
-							if (_v180.$ === 'Just') {
-								var localSc = _v180.a;
-								var _v181 = localSc.startStateIdx;
-								if (_v181.$ === 'Just') {
-									var idx = _v181.a;
+							var _v179 = A2($elm$core$Dict$get, localSCName, model.scs);
+							if (_v179.$ === 'Just') {
+								var localSc = _v179.a;
+								var _v180 = localSc.startStateIdx;
+								if (_v180.$ === 'Just') {
+									var idx = _v180.a;
 									return idx;
 								} else {
 									return 0;
@@ -22977,30 +22969,30 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 						}();
 						var globalSCName = $author$project$Utilities$Constants$globalIdx;
 						var globalSCStates = function () {
-							var _v179 = A2($elm$core$Dict$get, globalSCName, model.scs);
-							if (_v179.$ === 'Just') {
-								var globalSc = _v179.a;
+							var _v178 = A2($elm$core$Dict$get, globalSCName, model.scs);
+							if (_v178.$ === 'Just') {
+								var globalSc = _v178.a;
 								return globalSc.states;
 							} else {
 								return $elm$core$Dict$empty;
 							}
 						}();
 						var globalSCTrs = function () {
-							var _v178 = A2($elm$core$Dict$get, globalSCName, model.scs);
-							if (_v178.$ === 'Just') {
-								var globalSc = _v178.a;
+							var _v177 = A2($elm$core$Dict$get, globalSCName, model.scs);
+							if (_v177.$ === 'Just') {
+								var globalSc = _v177.a;
 								return globalSc.transitions;
 							} else {
 								return $elm$core$Dict$empty;
 							}
 						}();
 						var stIdxGlobal = function () {
-							var _v176 = A2($elm$core$Dict$get, globalSCName, model.scs);
-							if (_v176.$ === 'Just') {
-								var globalSc = _v176.a;
-								var _v177 = globalSc.startStateIdx;
-								if (_v177.$ === 'Just') {
-									var idx = _v177.a;
+							var _v175 = A2($elm$core$Dict$get, globalSCName, model.scs);
+							if (_v175.$ === 'Just') {
+								var globalSc = _v175.a;
+								var _v176 = globalSc.startStateIdx;
+								if (_v176.$ === 'Just') {
+									var idx = _v176.a;
 									return idx;
 								} else {
 									return 0;
@@ -23010,12 +23002,12 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 							}
 						}();
 						var updatedCode = function () {
-							var _v175 = _Utils_Tuple2(
+							var _v174 = _Utils_Tuple2(
 								A8($author$project$CodeGenerators$SCGenerator$generateSC, globalSCTrs, globalSCName, stIdxGlobal, globalSCStates, localSCStates, stIdxLocal, model.draggedMsgslabels, isGlobal),
 								A8($author$project$CodeGenerators$SCGenerator$generateSC, localSCTrs, localSCName, stIdxLocal, localSCStates, globalSCStates, stIdxGlobal, model.draggedMsgslabels, isGlobal));
-							if ((_v175.a.$ === 'Ok') && (_v175.b.$ === 'Ok')) {
-								var codeRecG = _v175.a.a;
-								var codeRecL = _v175.b.a;
+							if ((_v174.a.$ === 'Ok') && (_v174.b.$ === 'Ok')) {
+								var codeRecG = _v174.a.a;
+								var codeRecL = _v174.b.a;
 								return A5(
 									$author$project$Utilities$Helpers$addTwoItemsToDict,
 									globalSCName,
@@ -23038,23 +23030,23 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 									code: updatedCode,
 									globalState: function () {
 										if ($author$project$Utilities$Helpers$designCompletionChecker(model.draggedMsgslabels)) {
-											var _v174 = _Utils_Tuple2(
+											var _v173 = _Utils_Tuple2(
 												A2($author$project$Utilities$Helpers$connectionChecker, globalSCTrs, model.draggedMsgslabels),
 												A2($author$project$Utilities$Helpers$connectionChecker, localSCTrs, model.draggedMsgslabels));
-											if (_v174.a.$ === 'Ok') {
-												if (_v174.b.$ === 'Ok') {
-													if (_v174.a.a && _v174.b.a) {
+											if (_v173.a.$ === 'Ok') {
+												if (_v173.b.$ === 'Ok') {
+													if (_v173.a.a && _v173.b.a) {
 														return $author$project$Utilities$Types$GlobalDisplayCode;
 													} else {
 														return $author$project$Utilities$Types$GlobalError('Please make sure every input transition is connected to a channel.');
 													}
 												} else {
-													var missing2 = _v174.b.a;
+													var missing2 = _v173.b.a;
 													return $author$project$Utilities$Types$GlobalError(
 														'Please connect these local transitions to a channel:\n ' + $author$project$Utilities$Helpers$formatMissing(missing2));
 												}
 											} else {
-												var missing1 = _v174.a.a;
+												var missing1 = _v173.a.a;
 												return $author$project$Utilities$Types$GlobalError(
 													'Please connect these global transitions to a channel:\n ' + $author$project$Utilities$Helpers$formatMissing(missing1));
 											}
@@ -23069,11 +23061,11 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 						return $author$project$Utilities$Constants$noUpdate(model);
 					}
 				default:
-					var _v184 = model.globalState;
-					if (_v184.$ === 'Editing') {
-						var scName = _v184.a;
-						var stateChart = _v184.b;
-						var msgPositions = _v184.c;
+					var _v183 = model.globalState;
+					if (_v183.$ === 'Editing') {
+						var scName = _v183.a;
+						var stateChart = _v183.b;
+						var msgPositions = _v183.c;
 						return _Utils_Tuple3(
 							_Utils_update(
 								model,
