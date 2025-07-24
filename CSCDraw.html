@@ -7617,7 +7617,6 @@ var $author$project$Main$init = function (_v0) {
 			cmdDown: false,
 			code: $elm$core$Dict$empty,
 			delDown: false,
-			draggedMsgslabels: $elm$core$Dict$empty,
 			globalState: $author$project$Utilities$Types$OverallView,
 			isValid: true,
 			nextIdx: $author$project$Utilities$Constants$defaultIdx,
@@ -8316,13 +8315,6 @@ var $author$project$View$Graphics$invisibleRect = $MacCASOutreach$graphicsvg$Gra
 			$MacCASOutreach$graphicsvg$GraphicSVG$ghost(
 			A2($MacCASOutreach$graphicsvg$GraphicSVG$rect, 185, 125))
 		]));
-var $author$project$View$StateRenderers$CodeView$mainCodeFrom = function (parts) {
-	return A2(
-		$elm$core$String$join,
-		'\n',
-		_List_fromArray(
-			[parts.shapes, parts.updates, parts.inits]));
-};
 var $elm$html$Html$pre = _VirtualDom_node('pre');
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$View$StateRenderers$CodeView$codeDisplayer = function (codeDict) {
@@ -8342,11 +8334,19 @@ var $author$project$View$StateRenderers$CodeView$codeDisplayer = function (codeD
 			function () {
 			var localCode = $author$project$View$StateRenderers$CodeView$codeToString(
 				A2($author$project$View$StateRenderers$CodeView$getCode, $author$project$Utilities$Constants$localIdx, codeDict));
-			var mCodeL = $author$project$View$StateRenderers$CodeView$mainCodeFrom(localCode);
+			var mCodeL = A2(
+				$elm$core$String$join,
+				'\n',
+				_List_fromArray(
+					[localCode.shapes, localCode.updates, localCode.inits]));
 			var tysL = localCode.types;
 			var globalCode = $author$project$View$StateRenderers$CodeView$codeToString(
 				A2($author$project$View$StateRenderers$CodeView$getCode, $author$project$Utilities$Constants$globalIdx, codeDict));
-			var mCodeG = $author$project$View$StateRenderers$CodeView$mainCodeFrom(globalCode);
+			var mCodeG = A2(
+				$elm$core$String$join,
+				'\n',
+				_List_fromArray(
+					[globalCode.updates, globalCode.inits]));
 			var tysG = globalCode.types;
 			var typesModule = A2(
 				$elm$core$String$join,
@@ -17760,12 +17760,42 @@ var $author$project$Utilities$Helpers$calcMsgPos = function (stateChart) {
 				}),
 			$elm$core$Dict$toList(stateChart.outInterface)));
 };
+var $elm$core$Set$Set_elm_builtin = function (a) {
+	return {$: 'Set_elm_builtin', a: a};
+};
+var $elm$core$Set$empty = $elm$core$Set$Set_elm_builtin($elm$core$Dict$empty);
+var $elm$core$Set$insert = F2(
+	function (key, _v0) {
+		var dict = _v0.a;
+		return $elm$core$Set$Set_elm_builtin(
+			A3($elm$core$Dict$insert, key, _Utils_Tuple0, dict));
+	});
+var $elm$core$Set$fromList = function (list) {
+	return A3($elm$core$List$foldl, $elm$core$Set$insert, $elm$core$Set$empty, list);
+};
+var $author$project$Utilities$Helpers$channelTransIndices = function (channels) {
+	return $elm$core$Set$fromList(
+		A2(
+			$elm$core$List$concatMap,
+			function (_v0) {
+				var ups = _v0.c;
+				var downs = _v0.d;
+				return _Utils_ap(ups, downs);
+			},
+			$elm$core$Dict$values(channels)));
+};
+var $elm$core$Set$member = F2(
+	function (key, _v0) {
+		var dict = _v0.a;
+		return A2($elm$core$Dict$member, key, dict);
+	});
 var $elm$core$Tuple$second = function (_v0) {
 	var y = _v0.b;
 	return y;
 };
 var $author$project$Utilities$Helpers$connectionChecker = F2(
-	function (inputDict, draggedDict) {
+	function (inputDict, channels) {
+		var connectedTransSet = $author$project$Utilities$Helpers$channelTransIndices(channels);
 		var missing = A2(
 			$elm$core$List$map,
 			$elm$core$Tuple$second,
@@ -17773,7 +17803,7 @@ var $author$project$Utilities$Helpers$connectionChecker = F2(
 				$elm$core$List$filter,
 				function (_v0) {
 					var k = _v0.a;
-					return !A2($elm$core$Dict$member, k, draggedDict);
+					return !A2($elm$core$Set$member, k, connectedTransSet);
 				},
 				$elm$core$Dict$toList(inputDict)));
 		return $elm$core$List$isEmpty(missing) ? $elm$core$Result$Ok(true) : $elm$core$Result$Err(missing);
@@ -17817,6 +17847,7 @@ var $elm$json$Json$Decode$dict = function (decoder) {
 		$elm$json$Json$Decode$keyValuePairs(decoder));
 };
 var $elm$json$Json$Decode$fail = _Json_fail;
+var $elm$json$Json$Decode$map3 = _Json_map3;
 var $author$project$Utilities$Decoders$boundingBoxDecoder = A2(
 	$elm$json$Json$Decode$andThen,
 	function (lst) {
@@ -17878,7 +17909,6 @@ var $author$project$Utilities$Decoders$toTuple2 = function (list) {
 		return $elm$json$Json$Decode$fail('Expected a list with exactly 2 floats');
 	}
 };
-var $elm$json$Json$Decode$map3 = _Json_map3;
 var $author$project$Utilities$Decoders$targetDecoder = A4(
 	$elm$json$Json$Decode$map3,
 	$author$project$Utilities$Types$Ta,
@@ -18085,25 +18115,17 @@ var $author$project$Utilities$Decoders$stateChartDecoder = A2(
 var $author$project$Utilities$Decoders$cscDecoder = A2(
 	$elm$json$Json$Decode$andThen,
 	$elm$core$Basics$identity,
-	A5(
-		$elm$json$Json$Decode$map4,
-		F4(
-			function (scs, channelsStr, labelsStr, idx) {
-				var _v0 = _Utils_Tuple2(
-					$author$project$Utilities$Decoders$stringKeyDictToIntKeyDict(channelsStr),
-					$author$project$Utilities$Decoders$stringKeyDictToIntKeyDict(labelsStr));
-				if (_v0.a.$ === 'Ok') {
-					if (_v0.b.$ === 'Ok') {
-						var channels = _v0.a.a;
-						var labels = _v0.b.a;
-						return $elm$json$Json$Decode$succeed(
-							{channels: channels, draggedMsgslabels: labels, nextIdx: idx, scs: scs});
-					} else {
-						var e = _v0.b.a;
-						return $elm$json$Json$Decode$fail(e);
-					}
+	A4(
+		$elm$json$Json$Decode$map3,
+		F3(
+			function (scs, channelsStr, idx) {
+				var _v0 = $author$project$Utilities$Decoders$stringKeyDictToIntKeyDict(channelsStr);
+				if (_v0.$ === 'Ok') {
+					var channels = _v0.a;
+					return $elm$json$Json$Decode$succeed(
+						{channels: channels, nextIdx: idx, scs: scs});
 				} else {
-					var e = _v0.a.a;
+					var e = _v0.a;
 					return $elm$json$Json$Decode$fail(e);
 				}
 			}),
@@ -18115,10 +18137,6 @@ var $author$project$Utilities$Decoders$cscDecoder = A2(
 			$elm$json$Json$Decode$field,
 			'channels',
 			$elm$json$Json$Decode$dict($author$project$Utilities$Decoders$channelDecoder)),
-		A2(
-			$elm$json$Json$Decode$field,
-			'draggedMsgslabels',
-			$elm$json$Json$Decode$dict($elm$json$Json$Decode$string)),
 		A2($elm$json$Json$Decode$field, 'nextIdx', $elm$json$Json$Decode$int)));
 var $elm$json$Json$Encode$int = _Json_wrap;
 var $elm$json$Json$Encode$list = F2(
@@ -18420,8 +18438,8 @@ var $author$project$Utilities$Encoders$stateChartToJson = function (sc) {
 				A2($elm$json$Json$Encode$list, $author$project$Utilities$Encoders$undoRedoToJson, sc.redoLst))
 			]));
 };
-var $author$project$Utilities$Encoders$cscToJson = F4(
-	function (scs, channels, draggedMsgslabels, nextIdx) {
+var $author$project$Utilities$Encoders$cscToJson = F3(
+	function (scs, channels, nextIdx) {
 		return $elm$json$Json$Encode$object(
 			_List_fromArray(
 				[
@@ -18432,17 +18450,18 @@ var $author$project$Utilities$Encoders$cscToJson = F4(
 					'channels',
 					A2($author$project$Utilities$Encoders$dictToJson, $author$project$Utilities$Encoders$channelToJson, channels)),
 					_Utils_Tuple2(
-					'draggedMsgslabels',
-					A2($author$project$Utilities$Encoders$dictToJson, $elm$json$Json$Encode$string, draggedMsgslabels)),
-					_Utils_Tuple2(
 					'nextIdx',
 					$elm$json$Json$Encode$int(nextIdx))
 				]));
 	});
 var $elm$json$Json$Decode$decodeString = _Json_runOnString;
-var $author$project$Utilities$Helpers$designCompletionChecker = function (draggedDict) {
-	var draggedList = $elm$core$Dict$keys(draggedDict);
-	return !$elm$core$List$isEmpty(draggedList);
+var $elm$core$Set$isEmpty = function (_v0) {
+	var dict = _v0.a;
+	return $elm$core$Dict$isEmpty(dict);
+};
+var $author$project$Utilities$Helpers$designCompletionChecker = function (channels) {
+	return !$elm$core$Set$isEmpty(
+		$author$project$Utilities$Helpers$channelTransIndices(channels));
 };
 var $author$project$Utilities$Helpers$didResize = F3(
 	function (window, sw, sh) {
@@ -18799,16 +18818,16 @@ var $author$project$Utilities$Helpers$mkCmd = function (msg) {
 	return 'Task.perform ( \\ _ ->' + (msg + ') (Task.succeed 0)');
 };
 var $author$project$CodeGenerators$UpdateGenerator$generateUpdate = F4(
-	function (scIdx, transitionDict, stateDict, draggedDict) {
+	function (scIdx, transitionDict, stateDict, outTrs) {
 		var states = $elm$core$Dict$toList(stateDict);
 		var stateCount = $elm$core$List$length(
 			$elm$core$Dict$toList(stateDict));
 		var msgGenerator = F2(
-			function (idx, _v20) {
-				var transIdx = _v20.a;
-				var _v21 = _v20.b;
-				var name = _v21.a;
-				var types = _v21.b;
+			function (idx, _v21) {
+				var transIdx = _v21.a;
+				var _v22 = _v21.b;
+				var name = _v22.a;
+				var types = _v22.b;
 				var msgFields = A2(
 					$elm$core$String$join,
 					' ',
@@ -18854,19 +18873,21 @@ var $author$project$CodeGenerators$UpdateGenerator$generateUpdate = F4(
 												fromTypes));
 										var branchCount = $elm$core$Dict$size(targets);
 										var branchMsgGenerator = F2(
-											function (brIdx, _v9) {
-												var idxSTo = _v9.a;
-												var _v10 = _v9.b;
-												var pos = _v10.a;
-												var brName = _v10.b;
-												var mTrIdx = _v10.c;
+											function (brIdx, _v10) {
+												var idxSTo = _v10.a;
+												var _v11 = _v10.b;
+												var pos = _v11.a;
+												var brName = _v11.b;
+												var mTrIdx = _v11.c;
 												var cmdStr = function () {
 													if (mTrIdx.$ === 'Just') {
 														var msgIdx = mTrIdx.a;
-														var _v8 = A2($elm$core$Dict$get, msgIdx, draggedDict);
+														var _v8 = A2($elm$core$Dict$get, msgIdx, outTrs);
 														if (_v8.$ === 'Just') {
-															var msgName = _v8.a;
-															return $author$project$Utilities$Helpers$mkCmd(msgName);
+															var _v9 = _v8.a;
+															var label = _v9.a;
+															var tys = _v9.b;
+															return $author$project$Utilities$Helpers$mkCmd(label);
 														} else {
 															return 'Error in finding the synchronizing message.';
 														}
@@ -18933,32 +18954,32 @@ var $author$project$CodeGenerators$UpdateGenerator$generateUpdate = F4(
 							function () {
 								var finalCount = A2(
 									$elm$core$List$concatMap,
-									function (_v11) {
-										var fromIdx = _v11.a;
-										var _v12 = _v11.b;
-										var fromName = _v12.b;
-										var fromTypes = _v12.c;
-										var fromAttached = _v12.d;
-										var _v13 = A2($elm$core$Dict$get, transIdx, fromAttached);
-										if (_v13.$ === 'Just') {
-											var _v14 = _v13.a;
-											var targets = _v14.c;
+									function (_v12) {
+										var fromIdx = _v12.a;
+										var _v13 = _v12.b;
+										var fromName = _v13.b;
+										var fromTypes = _v13.c;
+										var fromAttached = _v13.d;
+										var _v14 = A2($elm$core$Dict$get, transIdx, fromAttached);
+										if (_v14.$ === 'Just') {
+											var _v15 = _v14.a;
+											var targets = _v15.c;
 											return A2(
 												$elm$core$List$map,
-												function (_v15) {
-													var idxTo = _v15.a;
-													var _v16 = _v15.b;
-													var _v17 = _v16.a;
-													var xToPull = _v17.a;
-													var yToPull = _v17.b;
-													var condition = _v16.b;
-													var msgIdx = _v16.c;
-													var _v18 = A2($elm$core$Dict$get, idxTo, stateDict);
-													if (_v18.$ === 'Just') {
-														var _v19 = _v18.a;
-														var toName = _v19.b;
-														var toTypes = _v19.c;
-														var toAttached = _v19.d;
+												function (_v16) {
+													var idxTo = _v16.a;
+													var _v17 = _v16.b;
+													var _v18 = _v17.a;
+													var xToPull = _v18.a;
+													var yToPull = _v18.b;
+													var condition = _v17.b;
+													var msgIdx = _v17.c;
+													var _v19 = A2($elm$core$Dict$get, idxTo, stateDict);
+													if (_v19.$ === 'Just') {
+														var _v20 = _v19.a;
+														var toName = _v20.b;
+														var toTypes = _v20.c;
+														var toAttached = _v20.d;
 														return _List_fromArray(
 															[toName]);
 													} else {
@@ -18986,7 +19007,7 @@ var $author$project$CodeGenerators$UpdateGenerator$generateUpdate = F4(
 				$elm$core$Dict$toList(transitionDict)));
 	});
 var $author$project$CodeGenerators$SCGenerator$generateSC = F8(
-	function (transitionDict, scIdx, startStateIdx, stateDict, otherStateDict, otherStart, draggedDict, isOverallView) {
+	function (transitionDict, scIdx, startStateIdx, stateDict, otherStateDict, otherStart, outTrs, isOverallView) {
 		var newLine = '\n\n';
 		var initialState = function (startIdx) {
 			var _v0 = A2($elm$core$Dict$get, startIdx, stateDict);
@@ -19024,7 +19045,7 @@ var $author$project$CodeGenerators$SCGenerator$generateSC = F8(
 					]),
 				updates: _List_fromArray(
 					[
-						A4($author$project$CodeGenerators$UpdateGenerator$generateUpdate, scIdx, transitionDict, stateDict, draggedDict)
+						A4($author$project$CodeGenerators$UpdateGenerator$generateUpdate, scIdx, transitionDict, stateDict, outTrs)
 					])
 			});
 	});
@@ -19228,19 +19249,6 @@ var $elm$core$Dict$filter = F2(
 			$elm$core$Dict$empty,
 			dict);
 	});
-var $elm$core$Set$Set_elm_builtin = function (a) {
-	return {$: 'Set_elm_builtin', a: a};
-};
-var $elm$core$Set$empty = $elm$core$Set$Set_elm_builtin($elm$core$Dict$empty);
-var $elm$core$Set$insert = F2(
-	function (key, _v0) {
-		var dict = _v0.a;
-		return $elm$core$Set$Set_elm_builtin(
-			A3($elm$core$Dict$insert, key, _Utils_Tuple0, dict));
-	});
-var $elm$core$Set$fromList = function (list) {
-	return A3($elm$core$List$foldl, $elm$core$Set$insert, $elm$core$Set$empty, list);
-};
 var $elm$core$Dict$map = F2(
 	function (func, dict) {
 		if (dict.$ === 'RBEmpty_elm_builtin') {
@@ -19259,11 +19267,6 @@ var $elm$core$Dict$map = F2(
 				A2($elm$core$Dict$map, func, left),
 				A2($elm$core$Dict$map, func, right));
 		}
-	});
-var $elm$core$Set$member = F2(
-	function (key, _v0) {
-		var dict = _v0.a;
-		return A2($elm$core$Dict$member, key, dict);
 	});
 var $author$project$Utilities$Update$UpdateDelHelpers$handleDeleteState = F2(
 	function (sIdx, model) {
@@ -21160,7 +21163,6 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 												model,
 												{
 													channels: A4($author$project$Utilities$Update$UpdateDragHelpers$updateChannelMsgs, sIdx, trIdx, chIdx, model.channels),
-													draggedMsgslabels: A3($elm$core$Dict$insert, trIdx, lbl, model.draggedMsgslabels),
 													globalState: $author$project$Utilities$Types$OverallView
 												});
 											return $author$project$Utilities$Helpers$populateOutputs(newModel);
@@ -21598,7 +21600,7 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 					var json = A2(
 						$elm$json$Json$Encode$encode,
 						4,
-						A4($author$project$Utilities$Encoders$cscToJson, model.scs, model.channels, model.draggedMsgslabels, model.nextIdx));
+						A3($author$project$Utilities$Encoders$cscToJson, model.scs, model.channels, model.nextIdx));
 					return _Utils_Tuple3(
 						model,
 						A3($elm$file$File$Download$string, 'csc.json', 'application/json', json),
@@ -21630,7 +21632,7 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 							return _Utils_Tuple3(
 								_Utils_update(
 									model,
-									{channels: newCSC.channels, draggedMsgslabels: newCSC.draggedMsgslabels, nextIdx: newCSC.nextIdx, scs: newCSC.scs}),
+									{channels: newCSC.channels, nextIdx: newCSC.nextIdx, scs: newCSC.scs}),
 								$elm$core$Platform$Cmd$none,
 								$author$project$Utilities$Types$NoSnapshot);
 						} else {
@@ -22936,30 +22938,30 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 					if (_v172.$ === 'OverallView') {
 						var localSCName = $author$project$Utilities$Constants$localIdx;
 						var localSCStates = function () {
-							var _v182 = A2($elm$core$Dict$get, localSCName, model.scs);
-							if (_v182.$ === 'Just') {
-								var localSc = _v182.a;
+							var _v184 = A2($elm$core$Dict$get, localSCName, model.scs);
+							if (_v184.$ === 'Just') {
+								var localSc = _v184.a;
 								return localSc.states;
 							} else {
 								return $elm$core$Dict$empty;
 							}
 						}();
 						var localSCTrs = function () {
-							var _v181 = A2($elm$core$Dict$get, localSCName, model.scs);
-							if (_v181.$ === 'Just') {
-								var localSc = _v181.a;
+							var _v183 = A2($elm$core$Dict$get, localSCName, model.scs);
+							if (_v183.$ === 'Just') {
+								var localSc = _v183.a;
 								return localSc.transitions;
 							} else {
 								return $elm$core$Dict$empty;
 							}
 						}();
 						var stIdxLocal = function () {
-							var _v179 = A2($elm$core$Dict$get, localSCName, model.scs);
-							if (_v179.$ === 'Just') {
-								var localSc = _v179.a;
-								var _v180 = localSc.startStateIdx;
-								if (_v180.$ === 'Just') {
-									var idx = _v180.a;
+							var _v181 = A2($elm$core$Dict$get, localSCName, model.scs);
+							if (_v181.$ === 'Just') {
+								var localSc = _v181.a;
+								var _v182 = localSc.startStateIdx;
+								if (_v182.$ === 'Just') {
+									var idx = _v182.a;
 									return idx;
 								} else {
 									return 0;
@@ -22968,32 +22970,41 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 								return 0;
 							}
 						}();
+						var localOutTrs = function () {
+							var _v180 = A2($elm$core$Dict$get, localSCName, model.scs);
+							if (_v180.$ === 'Just') {
+								var localSc = _v180.a;
+								return localSc.outInterface;
+							} else {
+								return $elm$core$Dict$empty;
+							}
+						}();
 						var globalSCName = $author$project$Utilities$Constants$globalIdx;
 						var globalSCStates = function () {
-							var _v178 = A2($elm$core$Dict$get, globalSCName, model.scs);
-							if (_v178.$ === 'Just') {
-								var globalSc = _v178.a;
+							var _v179 = A2($elm$core$Dict$get, globalSCName, model.scs);
+							if (_v179.$ === 'Just') {
+								var globalSc = _v179.a;
 								return globalSc.states;
 							} else {
 								return $elm$core$Dict$empty;
 							}
 						}();
 						var globalSCTrs = function () {
-							var _v177 = A2($elm$core$Dict$get, globalSCName, model.scs);
-							if (_v177.$ === 'Just') {
-								var globalSc = _v177.a;
+							var _v178 = A2($elm$core$Dict$get, globalSCName, model.scs);
+							if (_v178.$ === 'Just') {
+								var globalSc = _v178.a;
 								return globalSc.transitions;
 							} else {
 								return $elm$core$Dict$empty;
 							}
 						}();
 						var stIdxGlobal = function () {
-							var _v175 = A2($elm$core$Dict$get, globalSCName, model.scs);
-							if (_v175.$ === 'Just') {
-								var globalSc = _v175.a;
-								var _v176 = globalSc.startStateIdx;
-								if (_v176.$ === 'Just') {
-									var idx = _v176.a;
+							var _v176 = A2($elm$core$Dict$get, globalSCName, model.scs);
+							if (_v176.$ === 'Just') {
+								var globalSc = _v176.a;
+								var _v177 = globalSc.startStateIdx;
+								if (_v177.$ === 'Just') {
+									var idx = _v177.a;
 									return idx;
 								} else {
 									return 0;
@@ -23002,10 +23013,19 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 								return 0;
 							}
 						}();
+						var globalOutTrs = function () {
+							var _v175 = A2($elm$core$Dict$get, globalSCName, model.scs);
+							if (_v175.$ === 'Just') {
+								var globalSc = _v175.a;
+								return globalSc.outInterface;
+							} else {
+								return $elm$core$Dict$empty;
+							}
+						}();
 						var updatedCode = function () {
 							var _v174 = _Utils_Tuple2(
-								A8($author$project$CodeGenerators$SCGenerator$generateSC, globalSCTrs, globalSCName, stIdxGlobal, globalSCStates, localSCStates, stIdxLocal, model.draggedMsgslabels, isGlobal),
-								A8($author$project$CodeGenerators$SCGenerator$generateSC, localSCTrs, localSCName, stIdxLocal, localSCStates, globalSCStates, stIdxGlobal, model.draggedMsgslabels, isGlobal));
+								A8($author$project$CodeGenerators$SCGenerator$generateSC, globalSCTrs, globalSCName, stIdxGlobal, globalSCStates, localSCStates, stIdxLocal, globalOutTrs, isGlobal),
+								A8($author$project$CodeGenerators$SCGenerator$generateSC, localSCTrs, localSCName, stIdxLocal, localSCStates, globalSCStates, stIdxGlobal, localOutTrs, isGlobal));
 							if ((_v174.a.$ === 'Ok') && (_v174.b.$ === 'Ok')) {
 								var codeRecG = _v174.a.a;
 								var codeRecL = _v174.b.a;
@@ -23030,10 +23050,10 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 								{
 									code: updatedCode,
 									globalState: function () {
-										if ($author$project$Utilities$Helpers$designCompletionChecker(model.draggedMsgslabels)) {
+										if ($author$project$Utilities$Helpers$designCompletionChecker(model.channels)) {
 											var _v173 = _Utils_Tuple2(
-												A2($author$project$Utilities$Helpers$connectionChecker, globalSCTrs, model.draggedMsgslabels),
-												A2($author$project$Utilities$Helpers$connectionChecker, localSCTrs, model.draggedMsgslabels));
+												A2($author$project$Utilities$Helpers$connectionChecker, globalSCTrs, model.channels),
+												A2($author$project$Utilities$Helpers$connectionChecker, localSCTrs, model.channels));
 											if (_v173.a.$ === 'Ok') {
 												if (_v173.b.$ === 'Ok') {
 													if (_v173.a.a && _v173.b.a) {
@@ -23062,11 +23082,11 @@ var $author$project$Utilities$Update$Update$update3 = F2(
 						return $author$project$Utilities$Constants$noUpdate(model);
 					}
 				default:
-					var _v183 = model.globalState;
-					if (_v183.$ === 'Editing') {
-						var scName = _v183.a;
-						var stateChart = _v183.b;
-						var msgPositions = _v183.c;
+					var _v185 = model.globalState;
+					if (_v185.$ === 'Editing') {
+						var scName = _v185.a;
+						var stateChart = _v185.b;
+						var msgPositions = _v185.c;
 						return _Utils_Tuple3(
 							_Utils_update(
 								model,
