@@ -16,6 +16,7 @@ No prior coding knowledge is required to get started.
 1. download the [Try at Home Package](src\TryAtHome.rar) locally on your device. 
     - If you are facing any troubles with opening the package, please download these files manually: [CSCDraw](CSCDraw.html), [Party Game](#party-game), and [Lights Game](#lights-game).
 2. click on CSCDraw.html on your device to open it with your browser.
+    - It has been tested on Chrome (Version 138.0.7204.158).
 
 Then, you can either
 - try using our example pre-designed multi-player games by
