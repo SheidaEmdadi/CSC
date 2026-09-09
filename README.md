@@ -1,7 +1,7 @@
 # Simplifying Teaching Concurrency with Communicating StateCharts (CSC)
 
 
-In this guide, we provide an itroduction to our concurrency paradigm (CSC) and it's visual model-driven development tool (CSCDRaw).
+In this guide, we provide an itroduction to our concurrency paradigm (CSC) and it's visual model-driven development tool [CSCDraw](/CSCDraw-V2.html).
 This introduction is followed by two packages; [Try at Home package](#try-at-home) for getting started with our tool,
  and [Curriculum package](#curriculum) for teaching CSC to beginner programmers.
 
@@ -46,7 +46,7 @@ For more details about CSC and CSCDraw please refer to (citation removed for rev
 ## Try at Home!
 
 To try designing a multi-user application with our visual model-driven development tool, CSCDraw,
-please consult this [Try at Home guide](src\Try-at-Home.md). 
+please consult this [Try at Home guide](src/Try-at-Home.md). 
 
 
 
@@ -55,7 +55,7 @@ please consult this [Try at Home guide](src\Try-at-Home.md).
 ## Curriculum
 
 To teach students how to design and develop multi-user applications through CSC and CSCDraw,
-we have prepared a [curriculum package](src\Curriculum.zip) that consists of teaching materials
-and a comprehensive [guide](src\Curriculum.md) for teachers to how to use this package.
+we have prepared a [curriculum package](src/Curriculum.zip) that consists of teaching materials
+and a comprehensive [guide](src/Curriculum.md) for teachers to how to use this package.
 
 

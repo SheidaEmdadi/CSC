@@ -3,7 +3,7 @@
 This guide walks teachers through the curriculum of making a multi-user application through CSC.
 
 No prior coding knowledge is required for either of the teacher or the students.
-However, for the first time, **teachers** should consult the [Try at Home guide](src\Try-at-Home.md)
+However, for the first time, **teachers** should consult the [Try at Home guide](/src/Try-at-Home.zip)
 to learn about the design and development processes through CSC and CSCDraw. 
 
 

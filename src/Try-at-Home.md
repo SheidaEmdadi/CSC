@@ -13,15 +13,15 @@ No prior coding knowledge is required to get started.
 
 
 ## Introduction
-1. download the [Try at Home Package](src\TryAtHome.rar) locally on your device. 
-    - If you are facing any troubles with opening the package, please download these files manually: [CSCDraw](CSCDraw.html), [Party Game](#party-game), and [Lights Game](#lights-game).
+1. download the [Try at Home Package](/src/Try-at-Home.zip) locally on your device. 
+    - If you are facing any troubles with opening the package, please download these files manually: [CSCDraw](/CSCDraw-V2.html), [Party Game](#party-game), and [Lights Game](#lights-game).
 2. click on CSCDraw.html on your device to open it with your browser.
     - It has been tested on Chrome (Version 138.0.7204.158).
 
 Then, you can either
 - try using our example pre-designed multi-player games by
     1. clicking on the upload button <img src="Graphics/upload.png" alt="upload button" width="50"/>, and then 
-    2. choosing one of the pre-designed CSCs from the [Try at Home Package](src\TryAtHome.rar), such as [Party Game](#party-game) or [Lights Game](#lights-game). 
+    2. choosing one of the pre-designed CSCs from the [Try at Home Package](/src/Try-at-Home.zip), such as [Party Game](#party-game) or [Lights Game](#lights-game). 
         - To find a detailed decription of the examples, please consult the [CSC Examples](#csc-examples) section.
     3. generating code based on the designed models by clicking on the code generator button <img src="Graphics/CodeGen.png" alt="code generator" width="40"/>. 
     4. copying the generated code by `CTRL/CMD + A` and `CTRL/CMD + C`.
@@ -47,7 +47,7 @@ Then, you can either
     <!-- [STaBL.rocks](https://stabl.rocks/). -->
 
 
-An example of the development process can be found in this [demonstration video](https://anonymous.4open.science/r/CSC-314B/Demo/AnonymousDemo.mp4). 
+An example of the development process can be found in this [demonstration video](/Demo/V2.0/CSC-V2-Demo.mp4). 
 
 
 ## CSC Examples
@@ -60,7 +60,7 @@ a player hovers over a button it will light up only for them,
 and when they click on a button, it will switch ON/OFF
 the lights for everybody connected to the server (global).
 
-The [Lights Game](1-LightsGame\LightsGameCSC.json) can be found [game removed for review.]
+The [Lights Game](/src/1-LightsGame/LightsGameCSC.json) can be found [game removed for review.]
 <!-- [here](https://stabl.rocks/ShowTeasyncServerClient?teasyncServerId=b110fe0e-259c-46e8-8ec5-d365e5c03f7f). -->
 
 
@@ -70,7 +70,7 @@ their money to go to a party. In particular, the party will start only if at
 least three players successfully arrive at the PartyRoom. If a player fails
 to manage their money, then the party will be cancelled.
 
-The [Party Game](3-PartyGame\PartyGame.json) can be found [game removed for review.]
+The [Party Game](/src/3-PartyGame/PartyGame.json) can be found [game removed for review.]
 <!-- [here](https://stabl.rocks/ShowTeasyncServerClient?teasyncServerId=0e4eba0f-79a2-414b-abac-c30f2adfb68e). -->
 
 
