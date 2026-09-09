@@ -31,12 +31,12 @@ This view allows message specification and
 code generation.
 
 
-<img src="src/Graphics/Overall.png" alt="overall mode" width="500"/>
+<img src="src/Graphics/Overall.jpg" alt="overall mode" width="500"/>
 
 2. **SCEditing mode:** In this mode, the states and
 transitions within a statechart can be edited.
 
-<img src="src/Graphics/SCEditing.png" alt="SCEditing mode" width="500"/>
+<img src="src/Graphics/SCEditing.jpg" alt="SCEditing mode" width="500"/>
 
 For more details about CSC and CSCDraw please refer to (citation removed for review.)
 <!-- the [master's thesis](http://hdl.handle.net/11375/31620) of Sheida Emdadi. -->
